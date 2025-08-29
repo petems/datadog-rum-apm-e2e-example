@@ -1,0 +1,59 @@
+<html ng-app="Datablog">
+    <head>
+        <!-- DATADOG RUM -->
+        <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-rum-us.js"></script>
+        <script>
+            window.DD_RUM && window.DD_RUM.init({
+                clientToken: '<%= rum.clientToken %>',
+                applicationId: '<%= rum.applicationId %>',
+                env: '<%= rum.env %>',
+                service: '<%= rum.service %>',
+                version: '<%= rum.version %>',
+                allowedTracingOrigins: [/http:\/\/localhost:3000/],
+                trackInteractions: true
+            });
+        </script>
+
+        <!-- DATADOG BROWSER LOG COLLECTION -->
+        <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs-us.js"></script>
+        <script>
+            window.DD_LOGS && DD_LOGS.init({
+                clientToken: '<%= rum.clientToken %>',
+                forwardErrorsToLogs: true,
+                env: '<%= rum.env %>',
+                service: '<%= rum.service %>',
+                version: '<%= rum.version %>',
+                sampleRate: 100
+            });
+            console.error("Test console error message")
+            window.DD_LOGS && DD_LOGS.logger.info('Example DD_LOGGER message', {custom: { name: 'example json', id: 123 }});
+        </script>
+
+        <!-- CSS -->
+        <link href="/stylesheets/style.css" type="text/css" rel="stylesheet">
+        <title>Welcome to Datablog!!!</title>
+    </head>
+    <body ng-controller="MainController as vm">
+        <h1>Welcome to Datablog!!!</h1>
+
+        <a href="/page"><button>Create a New Page</button></a>
+        <h2>Pages</h2>
+
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Created</th>
+            </tr>
+
+            <!-- EJS Setup to list pages-->
+            <%for (var p in pages){%>
+                <tr>
+                    <td><a href="/page/<%=pages[p]['id']%>"><%=pages[p]['id']%></a></td>
+                    <td><%=pages[p]['title']%></td>
+                    <td><%=pages[p]['createdDate']%></td>
+                </tr>
+            <%}%>
+        </table>
+    </body>
+</html>

@@ -1,0 +1,48 @@
+
+services:
+  ddagent:
+    image: datadog/agent
+    container_name: datadog-agent
+    env_file: .env
+    environment:
+      - DD_APM_ENABLED=true
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_LOG_LEVEL=debug
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
+    ports:
+      - "8126:8126"
+      - "8125:8125"
+  app:
+    container_name: datablog
+    restart: always
+    build: .
+    env_file: .env
+    labels: 
+       com.datadoghq.tags.env: development
+       com.datadoghq.tags.service: datablog
+       com.datadoghq.tags.version: "2.0.0"
+       com.datadoghq.ad.logs: '[{"source": "node", "service": "datablog"}]'
+    environment:
+      - DD_AGENT_HOST=datadog-agent
+      - DOCKER=true
+      - DD_ENV=development
+      - DD_SERVICE=datablog
+      - DD_VERSION=2.0.0
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+      - ddagent
+  mongo:
+    container_name: mongo
+    image: mongo
+    labels: 
+       com.datadoghq.tags.env: development
+       com.datadoghq.tags.service: datablog-mongo
+    # Uncomment for persistent data
+    #volumes:
+      #- ./data/db:/data/db
+    ports:
+      - "27017:27017"

@@ -1,0 +1,85 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background-color: lavender;
+}
+
+
+th {
+  text-align: left;
+}
+
+td {
+  padding-right: 50px;
+}
+
+.page-body-background {
+  min-width: 500px;
+  border-radius: 25px;
+  background-color: ghostwhite;
+  border: 1px solid #ccc;
+}
+
+.page-body {
+  padding: 10px 25px;
+  white-space: pre-line;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.page-input-text {
+  background-color: ghostwhite;
+  font-family: Arial, Helvetica, sans-serif;
+  width: 100%;
+  min-width: 500px;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: #FEFEFE;
+  border: none;
+  padding: 15px 32px;
+  margin: 0px 5px ;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  border-radius: 10px;
+}
+
+button.home-button {
+  width: 200px;
+  height: 100px;
+}
+
+.left {
+  position: relative;
+  display: inline-block;
+  left: 0px;
+  width: 49%;
+  text-align: left;
+  vertical-align: top;
+}
+
+.right {
+  padding: 0px;
+  position: relative;
+  display: inline-block;
+  right: 0px;
+  width: 49%;
+  text-align: right;
+  vertical-align: top;
+}
+
+div.placeholder-image {
+  width:90%;
+  height:500px;
+  background-color: lightgreen;
+  margin: 50px;
+  text-align: center;
+  vertical-align: middle;
+}
