@@ -9,7 +9,6 @@ const app = express();
 app.use('/api/page', router);
 
 const managePages = require('../controllers/manage-pages');
-const logger = require('../logger');
 
 describe('API Routes', () => {
   beforeEach(() => {
