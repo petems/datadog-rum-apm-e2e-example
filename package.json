@@ -21,11 +21,12 @@
     "dd-trace": "^5.28.0",
     "debug": "~2.6.9",
     "ejs": "^3.1.10",
+    "escape-html": "^1.0.3",
     "express": "^4.21.1",
+    "express-rate-limit": "^8.0.1",
     "hot-shots": "^7.6.0",
     "http-errors": "~1.6.3",
-    "mongoose": "^5.9.7",
-    "escape-html": "^1.0.3"
+    "mongoose": "^5.9.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
