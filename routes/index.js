@@ -16,7 +16,7 @@ const indexRateLimit = rateLimit({
 });
 
 /* GET home page. */
-router.get('/(|v1)', indexRateLimit, function (req, res) {
+router.get(['/', '/v1'], indexRateLimit, function (req, res) {
   logger.info(`Request for index page: ${req.url}`);
 
   pageModel
