@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ master, main ]
 
+# Global permissions for all jobs
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+
 jobs:
   # Lint and Format Check
   lint:
