@@ -1,102 +1,224 @@
-# datadog-RUM-APM-e2e-example
+# Datablog - Datadog RUM & APM E2E Example
 
-A simple docker-compose setup to allow you to see how RUM and APM connect together in a full
-connected setup.
+A blog application demonstrating end-to-end tracing with Datadog Real User Monitoring (RUM) and
+Application Performance Monitoring (APM).
 
-### Pre-requisites
+### App Screenshots
 
-- docker-compose
-- A Datadog API Key
+![Datablog Screenshot](docs/screenshots/homepage.png)
 
-#### Step 1: Setup a RUM Application in Datadog
+### Trace E2E Screenshot
 
-Go to your Datadog account, navigate to your RUM Applications, and create a
-[New Application](https://app.datadoghq.com/rum/create).
+![RUM and APM Connected Trace](docs/screenshots/rum-and-apm-trace.png)
 
-Give it the name "datablog" and then click "Generate Client Token".
+## What This Project Does
 
-This will provide you an `applicationId` and `clientToken`, you will utilize these to enable RUM for
-your application.
+**Datablog** is a full-stack blog application that demonstrates:
 
-### Deploy with docker-compose
+- **Real User Monitoring (RUM)**: Tracks user interactions, page views, and frontend performance
+- **Application Performance Monitoring (APM)**: Monitors backend API calls, database queries, and
+  custom instrumentation
+- **Distributed Tracing**: Connects frontend requests to backend traces for end-to-end visibility
+- **Custom Instrumentation**: Examples of manual span creation and custom metrics in RUM and APM
+- **Error Tracking**: Captures both frontend and backend errors with context
 
-#### Step 1: Update .env with your correct keys
+## ⚠️ Caveats
 
-Copy the existing .env.example file
+This example uses a simplified architecture for demonstration purposes:
 
-```
-$ cp .env.example .env
-```
+- **Monolithic Design**: Both frontend and backend run from the same Express.js application
+- **Server-Side Rendering**: Uses EJS templates instead of a separate frontend framework
+- **Development Focus**: Optimized for learning and demonstration rather than production use
 
-Add in your RUM Client Token and Application ID, as well as your Datadog API key and change the site
-if you're not using Datadog.com (eg. `datadoghq.eu`)
+**Note**: In real-world applications, you would typically:
 
-#### Step 2: Build the app image
+- Separate frontend (React/Vue/Angular) and backend (API) into different services
+- Use a proper frontend build process with bundling and optimization
+- Implement proper CORS configuration for cross-origin requests
+- Deploy services independently with their own scaling and monitoring
 
-Run the following while in this directory:
+This simplified approach makes it easier to understand the RUM-APM integration concepts without the
+complexity of microservices architecture.
 
-```
-docker-compose build
-```
-
-This will build the image for the application.
-
-#### Step 3: Bring up the Containers
-
-```
-docker-compose up -d
-```
-
-Then visit http://localhost:3000 in your browser, and create some traffic.
-
-## Features
-
-### Custom Instrumentation for APM
-
-There are a few examples of Custom Instrumentation generating custom spans within this application.
-There are a couple ways documented in our [API Docs](https://datadoghq.dev/dd-trace-js/) and
-[Public Docs](https://docs.datadoghq.com/tracing/custom_instrumentation/nodejs/?tab=asyncawait#creating-spans).
-
-You'll see examples using the async/await calls and the `tracer.wrap(...)` calls in
-`/controllers/manage-pages.js`
-
-### Connecting RUM and APM
-
-For starters you can read about connecting RUM and APM Data here:
-
-- https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces/?tab=browserrum
-
-The examples currently provided are limited towards the NPM Setup, but the idea there is the same
-for the CDN setup here. We just need to add in the configuration option for `allowedTracingOrigins`.
-In this case my `allowedTracingOrigins` is set like:
+## 🏗️ Architecture
 
 ```
-    allowedTracingOrigins: [/http:\/\/localhost:3000/],
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend       │    │   Database      │
+│   (RUM)         │    │   (APM)         │    │   (MongoDB)     │
+│                 │    │                 │    │                 │
+│ • User          │───▶│ • Express.js    │───▶│ • Page Storage  │
+│   Interactions  │    │ • Custom Spans  │    │ • Collections   │
+│ • Page Views    │    │ • API Endpoints │    │                 │
+│ • Performance   │    │ • Rate Limiting │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   Datadog       │
+                    │   Agent         │
+                    │                 │
+                    │ • Metrics       │
+                    │ • Traces        │
+                    │ • Logs          │
+                    └─────────────────┘
 ```
 
-To track any requests made locally to "my" API. You'll see that in the init script if you bring up
-the Browser Developer Console and go to the Elements page holding the HTML / init script here.
+## Getting Started
 
-This works by having the RUM package set headers like `x-datadog-trace-id` and `x-datadog-parent-id`
-when making the request to the APM Service to initialize the trace. The APM Service receiving this
-will then handle it like a Distributed Trace. I've included those headers into the logs for the API
-Requests, which you can see in your Log Explorer.
+### Prerequisites
 
-An important note is that this supports Javascript Strings and Regex Strings. These are _separate_
-entities in Javascript.
+- Docker & Docker Compose
+- Node.js 20+ (for local development)
+- Datadog API Key
+- Datadog RUM Application credentials
 
-By default this will set the the `browser.request` spans as `datablog-ui` to separate them from the
-"backend" `datablog` spans. You'll see them when creating, updating, or deleting a given page. It is
-just limited to those as those are the only "requests" the Browser is making in this. You can see
-those requests at the corresponding files:
+### Getting Started
 
-- `new-page.ejs` for the create / POST request
-- `edit-page.ejs` for the update / PUT request
-- `page.ejs` for the delete / DELETE request
+1. **Clone and Setup**
 
-### Future Features
+   ```bash
+   git clone https://github.com/petems/datadog-rum-apm-e2e-example
+   cd datadog-rum-apm-e2e-example
+   cp .env.example .env
+   ```
 
-- User tracking via login
-- MongoDB Integration
-- DBM for MongoDB
-- Custom Context
+2. **Configure Environment**
+
+   ```bash
+   # Edit .env with your Datadog credentials
+   DD_API_KEY=your_api_key_here
+   DD_RUM_APPLICATION_ID=your_rum_app_id
+   DD_RUM_CLIENT_TOKEN=your_rum_client_token
+   ```
+
+3. **Deploy**
+
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Access Application**
+   - Frontend: http://localhost:3000
+   - MongoDB: localhost:27017
+   - Datadog Agent: localhost:8126 (APM), localhost:8125 (StatsD)
+
+### Local Development
+
+1. **Install Dependencies**
+
+   ```bash
+   npm install
+   ```
+
+2. **Setup MongoDB**
+
+   ```bash
+   # Using Docker
+   docker run -d -p 27017:27017 --name mongo mongo
+
+   # Or install MongoDB locally
+   ```
+
+3. **Start Development Server**
+
+   ```bash
+   npm start
+   ```
+
+4. **Run Tests**
+   ```bash
+   npm test                    # Unit tests
+   npm run test:coverage      # Coverage report
+   npm run test:e2e          # End-to-end tests
+   npm run test:e2e:ui       # E2E tests with UI
+   ```
+
+## 🔧 Development Workflows
+
+### Code Quality
+
+```bash
+npm run lint              # Check code style
+npm run lint:fix          # Auto-fix linting issues
+npm run format            # Format code with Prettier
+npm run format:check      # Check formatting
+```
+
+### Testing Strategy
+
+- **Unit Tests**: Jest for backend logic and API endpoints
+- **Integration Tests**: API testing with supertest
+- **E2E Tests**: Playwright for full user journey testing
+- **Visual Regression**: Automated screenshot comparison
+
+### Monitoring Development
+
+1. **Custom Instrumentation**: See examples in `controllers/manage-pages.js`
+2. **RUM Configuration**: Configured in `config/rum.js`
+3. **Custom Metrics**: StatsD integration for page views
+4. **Error Tracking**: Automatic error capture and logging
+
+### Database Operations
+
+```bash
+# Connect to MongoDB
+docker exec -it mongo mongosh
+
+# View collections
+show collections
+
+# Query pages
+db.pages.find().pretty()
+```
+
+## Future Features
+
+### Planned Enhancements
+
+- **Authentication System**
+  - User registration and login
+  - JWT token management
+  - Role-based access control
+  - Session management with RUM user tracking
+
+## 📸 Screenshots
+
+### Homepage
+
+![Homepage](docs/screenshots/homepage.png)
+
+_Screenshots are automatically updated via the `npm run screenshot` command_
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style (ESLint + Prettier)
+- Write tests for new features
+- Update documentation as needed
+- Ensure all tests pass before submitting
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+
+## Support
+
+- **Issues**: Report bugs and feature requests via GitHub Issues
+- **Documentation**: Check the [Datadog documentation](https://docs.datadoghq.com/)
+- **Community**: Join the [Datadog community](https://community.datadoghq.com/)
+
+## Related Resources
+
+- [Datadog RUM Documentation](https://docs.datadoghq.com/real_user_monitoring/)
+- [Datadog APM Documentation](https://docs.datadoghq.com/tracing/)
+- [Node.js Tracing Guide](https://datadoghq.dev/dd-trace-js/)
+- [RUM-APM Integration Guide](https://docs.datadoghq.com/real_user_monitoring/connect_rum_and_traces/)
