@@ -1,59 +1,140 @@
-<html ng-app="Datablog">
-    <head>
-        <!-- DATADOG RUM -->
-        <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-rum-us.js"></script>
-        <script>
-            window.DD_RUM && window.DD_RUM.init({
-                clientToken: '<%= rum.clientToken %>',
-                applicationId: '<%= rum.applicationId %>',
-                env: '<%= rum.env %>',
-                service: '<%= rum.service %>',
-                version: '<%= rum.version %>',
-                allowedTracingOrigins: [/http:\/\/localhost:3000/],
-                trackInteractions: true
-            });
-        </script>
+<!DOCTYPE html>
+<html lang="en" ng-app="Datablog">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- DATADOG RUM -->
+    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-rum-us.js"></script>
+    <script>
+        window.DD_RUM && window.DD_RUM.init({
+            clientToken: '<%= rum.clientToken %>',
+            applicationId: '<%= rum.applicationId %>',
+            env: '<%= rum.env %>',
+            service: '<%= rum.service %>',
+            version: '<%= rum.version %>',
+            allowedTracingOrigins: [/http:\/\/localhost:3000/],
+            trackInteractions: true
+        });
+    </script>
 
-        <!-- DATADOG BROWSER LOG COLLECTION -->
-        <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs-us.js"></script>
-        <script>
-            window.DD_LOGS && DD_LOGS.init({
-                clientToken: '<%= rum.clientToken %>',
-                forwardErrorsToLogs: true,
-                env: '<%= rum.env %>',
-                service: '<%= rum.service %>',
-                version: '<%= rum.version %>',
-                sampleRate: 100
-            });
-            console.error("Test console error message")
-            window.DD_LOGS && DD_LOGS.logger.info('Example DD_LOGGER message', {custom: { name: 'example json', id: 123 }});
-        </script>
+    <!-- DATADOG BROWSER LOG COLLECTION -->
+    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs-us.js"></script>
+    <script>
+        window.DD_LOGS && DD_LOGS.init({
+            clientToken: '<%= rum.clientToken %>',
+            forwardErrorsToLogs: true,
+            env: '<%= rum.env %>',
+            service: '<%= rum.service %>',
+            version: '<%= rum.version %>',
+            sampleRate: 100
+        });
+        console.error("Test console error message")
+        window.DD_LOGS && DD_LOGS.logger.info('Example DD_LOGGER message', {custom: { name: 'example json', id: 123 }});
+    </script>
 
-        <!-- CSS -->
-        <link href="/stylesheets/style.css" type="text/css" rel="stylesheet">
-        <title>Welcome to Datablog!!!</title>
-    </head>
-    <body ng-controller="MainController as vm">
-        <h1>Welcome to Datablog!!!</h1>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/stylesheets/style.css" type="text/css" rel="stylesheet">
+    
+    <title>Welcome to Datablog</title>
+</head>
+<body ng-controller="MainController as vm">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand text-gradient" href="/">
+                📝 Datablog
+            </a>
+        </div>
+    </nav>
 
-        <a href="/page"><button>Create a New Page</button></a>
-        <h2>Pages</h2>
+    <div class="container">
+        <!-- Welcome Header -->
+        <div class="page-header text-center">
+            <h1 class="display-4 text-gradient mb-3">Welcome to Datablog!</h1>
+            <p class="lead text-muted">Your personal blog powered by Datadog monitoring</p>
+            <div class="mt-4">
+                <a href="/page" class="btn btn-primary btn-lg">
+                    ✨ Create New Page
+                </a>
+            </div>
+        </div>
 
-        <table>
-            <tr>
-                <th>ID</th>
-                <th>Title</th>
-                <th>Created</th>
-            </tr>
+        <!-- Pages Section -->
+        <div class="page-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">📚 Your Pages</h2>
+                <span class="badge bg-primary fs-6"><%= Object.keys(pages).length %> pages</span>
+            </div>
 
-            <!-- EJS Setup to list pages-->
-            <%for (var p in pages){%>
-                <tr>
-                    <td><a href="/page/<%=pages[p]['id']%>"><%=pages[p]['id']%></a></td>
-                    <td><%=pages[p]['title']%></td>
-                    <td><%=pages[p]['createdDate']%></td>
-                </tr>
-            <%}%>
-        </table>
-    </body>
+            <% if (Object.keys(pages).length === 0) { %>
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <svg width="64" height="64" class="text-muted" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clip-rule="evenodd"/>
+                            <path d="M8 6h4v1H8V6zM8 8h4v1H8V8zM8 10h2v1H8v-1z"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-muted mb-3">No pages yet</h4>
+                    <p class="text-muted">Get started by creating your first blog page!</p>
+                    <a href="/page" class="btn btn-outline-primary">Create First Page</a>
+                </div>
+            <% } else { %>
+                <!-- Pages Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="text-center">#</th>
+                                <th scope="col">Title</th>
+                                <th scope="col">Created</th>
+                                <th scope="col" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% for (var p in pages) { %>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge bg-light text-dark">#<%= pages[p]['id'] %></span>
+                                    </td>
+                                    <td>
+                                        <a href="/page/<%= pages[p]['id'] %>" class="fw-semibold">
+                                            <%= pages[p]['title'] || 'Untitled' %>
+                                        </a>
+                                    </td>
+                                    <td class="text-muted">
+                                        <small><%= pages[p]['createdDate'] %></small>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="/page/<%= pages[p]['id'] %>" class="btn btn-outline-primary">
+                                                👁️ View
+                                            </a>
+                                            <a href="/page/<%= pages[p]['id'] %>/edit" class="btn btn-outline-secondary">
+                                                ✏️ Edit
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center py-4 text-muted">
+            <small>Powered by Datadog monitoring • Built with ❤️</small>
+        </footer>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </html>
