@@ -67,7 +67,7 @@ router.get('/', function (req, res) {
 });
 
 /* GET edit page */
-router.get('/:page_id/edit', async (req, res) => {
+router.get('/:page_id/edit', (req, res) => {
   const page_id = req.params.page_id;
   logger.info(`Requesting Paged URL: ${req.url}, ID: ${page_id}`);
 

@@ -2,33 +2,22 @@ const pageModel = require('../mongo/models/pageModel');
 const logger = require('../logger');
 const tracer = require('dd-trace');
 
-let getAllPages = () => {
-  return pageModel.find({}, function (err, pages) {
-    if (err) {
-      logger.error(`Error encountered${err}`);
-      throw err;
-    }
-
-    logger.info(`API Successfully found all pages, count: ${pages.length}`);
-    return pages;
-  });
+let getAllPages = async () => {
+  const pages = await pageModel.find({});
+  logger.info(`API Successfully found all pages, count: ${pages.length}`);
+  return pages;
 };
 
-let getPageById = page_id => {
-  return pageModel.find({ id: page_id }, function (err, pages) {
-    if (err) {
-      logger.error(`Error encountered${err}`);
-      throw err;
-    }
+let getPageById = async page_id => {
+  const pages = await pageModel.find({ id: page_id });
 
-    if (pages.length === 0) {
-      logger.warn(`Page: ${page_id} not found`);
-    } else {
-      logger.info({ page: pages }, 'API Successfully found page');
-    }
+  if (pages.length === 0) {
+    logger.warn(`Page: ${page_id} not found`);
+  } else {
+    logger.info({ page: pages }, 'API Successfully found page');
+  }
 
-    return pages;
-  });
+  return pages;
 };
 
 let createPage = async body => {
@@ -47,16 +36,10 @@ let createPage = async body => {
   return result;
 };
 
-let deletePageById = page_id => {
-  return pageModel.deleteOne({ id: page_id }, function (err) {
-    if (err) {
-      logger.error(err, 'Error when deleting');
-      return false;
-    }
-    logger.info(`Successful delete of page: ${page_id}`);
-
-    return true;
-  });
+let deletePageById = async page_id => {
+  await pageModel.deleteOne({ id: page_id });
+  logger.info(`Successful delete of page: ${page_id}`);
+  return true;
 };
 
 let updatePage = async (pageModel, body) => {
@@ -67,12 +50,7 @@ let updatePage = async (pageModel, body) => {
 
   logger.info({ page: pageModel }, 'Updating Article article');
 
-  await pageModel.save(function (err) {
-    if (err) {
-      logger.error({ page: pageModel }, 'Error updating page');
-      throw err;
-    }
-  });
+  await pageModel.save();
 
   logger.info({ page: pageModel }, 'Successful page saving');
   return pageModel;
@@ -92,12 +70,7 @@ async function savePage(id, title, body) {
 
   logger.info({ page: newPage }, 'Creating article');
 
-  await newPage.save(function (err) {
-    if (err) {
-      logger.error({ page: newPage }, 'Error creating new page');
-      throw err;
-    }
-  });
+  await newPage.save();
 
   logger.info({ page: newPage }, 'Successful page saving');
   return newPage;
@@ -111,13 +84,7 @@ async function getNextPageId() {
       .find(
         { id: { $ne: '' } },
         'id',
-        { sort: { id: 'descending' } },
-        function (err, _pages) {
-          if (err) {
-            logger.error(`Error encountered${err}`);
-            throw err;
-          }
-        }
+        { sort: { id: 'descending' } }
       )
       .limit(1);
 
