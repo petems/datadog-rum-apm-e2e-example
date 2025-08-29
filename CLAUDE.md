@@ -109,7 +109,7 @@ docker-compose down         # Stop all services
 The project uses GitHub Actions with multiple jobs:
 
 - **Lint**: ESLint and Prettier formatting checks
-- **Test**: Jest unit tests across Node.js 20, 22
+- **Test**: Jest unit tests across Node.js 22.18.0, 24
 - **Docker**: Build verification and security scanning (Trivy, Hadolint)
 - **E2E**: Playwright tests against full application stack
 
