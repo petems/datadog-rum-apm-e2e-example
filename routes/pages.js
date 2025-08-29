@@ -13,6 +13,16 @@ router.get('/:page_id', async (req, res) => {
   const page_id = req.params.page_id;
   logger.info(`Requesting Paged URL: ${req.url}, ID: ${page_id}`);
 
+  // Validate page_id: only allow digits to prevent SSRF/path traversal
+  if (!/^\d+$/.test(page_id)) {
+    logger.warn({ page_id }, 'Invalid page_id provided, denied');
+    return res.status(400).render('error', {
+      statusCode: 400,
+      message: 'Invalid page ID',
+      rum,
+    });
+  }
+
   dogstatsd.increment('page.views', [`page:${page_id}`]);
 
   let pageData = '';
@@ -71,11 +81,9 @@ router.get('/:page_id/edit', (req, res) => {
   const page_id = req.params.page_id;
   logger.info(`Requesting Paged URL: ${req.url}, ID: ${page_id}`);
 
-  // Validate page_id to avoid SSRF or path traversal
-  // Accept only UUIDs or numbers; adapt regex as needed for your IDs
-  const validPageId = /^[a-zA-Z0-9_-]+$/.test(page_id);
-  if (!validPageId) {
-    logger.warn({ page_id }, 'Blocked request with invalid page_id');
+  // Validate page_id: only allow digits to prevent SSRF/path traversal
+  if (!/^\d+$/.test(page_id)) {
+    logger.warn({ page_id }, 'Invalid page_id provided, denied');
     return res.status(400).render('error', {
       statusCode: 400,
       message: 'Invalid page ID',
