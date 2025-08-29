@@ -70,7 +70,7 @@ complexity of microservices architecture.
 ### Prerequisites
 
 - Docker & Docker Compose
-- Node.js 20+ (for local development)
+- Node.js 22.18.0+ (for local development)
 - Datadog API Key
 - Datadog RUM Application credentials
 
