@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
 const managePages = require('../controllers/manage-pages');
+const escape = require('escape-html');
 
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
@@ -48,7 +49,7 @@ router.put('/:page_id', async (req, res) => {
   } else if (pageToEdit.length > 1) {
     res
       .status(400)
-      .send(`Bad Request, multiple pages with id: ${page_id} found`);
+      .send(`Bad Request, multiple pages with id: ${escape(page_id)} found`);
   }
 
   const result = await managePages.updatePage(pageToEdit[0], req.body);

@@ -24,7 +24,8 @@
     "express": "^4.21.1",
     "hot-shots": "^7.6.0",
     "http-errors": "~1.6.3",
-    "mongoose": "^5.9.7"
+    "mongoose": "^5.9.7",
+    "escape-html": "^1.0.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
