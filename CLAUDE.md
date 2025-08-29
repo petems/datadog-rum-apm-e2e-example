@@ -129,3 +129,15 @@ the backend APM picks up for distributed tracing.
 
 All page CRUD operations go through the `manage-pages.js` controller which includes custom tracing
 spans for performance monitoring.
+
+### Development Workflow
+
+After making code changes, always run:
+
+```bash
+npm run lint:fix           # Fix linting issues
+npm run format             # Format code
+npm test                   # Run unit tests
+```
+
+This ensures code quality and prevents CI failures.

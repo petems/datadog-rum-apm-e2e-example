@@ -9,7 +9,7 @@ const StatsD = require('hot-shots');
 const dogstatsd = new StatsD();
 
 /* GET individual page listing. */
-router.get('/:page_id', async (req, res) => {
+router.get('/:page_id', (req, res) => {
   const page_id = req.params.page_id;
   logger.info(`Requesting Paged URL: ${req.url}, ID: ${page_id}`);
 
@@ -66,6 +66,11 @@ router.get('/:page_id', async (req, res) => {
     })
     .on('error', err => {
       logger.error(`Error: ${err.message}`);
+      res.render('error', {
+        statusCode: 500,
+        message: 'Internal Server Error',
+        rum,
+      });
     });
 });
 
@@ -132,6 +137,11 @@ router.get('/:page_id/edit', (req, res) => {
     })
     .on('error', err => {
       logger.error(`Error: ${err.message}`);
+      res.render('error', {
+        statusCode: 500,
+        message: 'Internal Server Error',
+        rum,
+      });
     });
 });
 
