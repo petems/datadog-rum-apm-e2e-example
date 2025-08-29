@@ -25,10 +25,10 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: npx eslint . --ext .js --format stylish --max-warnings 0
+        run: npm run lint
 
       - name: Check Prettier formatting
-        run: npx prettier --check "**/*.{js,json,md}"
+        run: npm run format:check
 
   # Unit and Integration Tests
   test:
