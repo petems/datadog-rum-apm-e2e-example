@@ -27,7 +27,7 @@
     ]
   },
   "dependencies": {
-    "body-parser": "^1.19.0",
+    "body-parser": "^2.2.0",
     "bunyan": "^1.8.15",
     "dd-trace": "^5.28.0",
     "debug": "~4.4.1",
