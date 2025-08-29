@@ -10,8 +10,9 @@ module.exports = [
       globals: {
         ...globals.browser,
         ...globals.commonjs,
-        ...globals.node,
+        ...globals.es2021,
         ...globals.jest,
+        ...globals.node,
       },
     },
     rules: {
