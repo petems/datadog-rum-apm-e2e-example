@@ -38,6 +38,23 @@ The app demonstrates RUM-APM connection via:
 npm start                    # Start the application (port 3000)
 ```
 
+### Testing
+```bash
+npm test                     # Run Jest unit tests
+npm run test:watch          # Run tests in watch mode
+npm run test:coverage       # Run tests with coverage report
+npm run test:e2e            # Run Playwright end-to-end tests
+npm run test:e2e:ui         # Run Playwright tests with UI mode
+```
+
+### Code Quality
+```bash
+npm run lint                # Run ESLint
+npm run lint:fix           # Run ESLint with auto-fix
+npm run format             # Format code with Prettier
+npm run format:check       # Check code formatting
+```
+
 ### Docker Development
 ```bash
 cp .env.example .env        # Setup environment variables
@@ -58,6 +75,27 @@ docker-compose down         # Stop all services
 - Main app: http://localhost:3000
 - MongoDB: localhost:27017
 - Datadog Agent: localhost:8126 (APM), localhost:8125 (DogStatsD)
+
+## Testing Framework
+
+### Unit Testing
+- **Framework**: Jest
+- **Coverage**: Integrated coverage reporting
+- **Location**: Tests located alongside source files or in `__tests__` directories
+- **Test Environment**: Uses test MongoDB instance
+
+### End-to-End Testing  
+- **Framework**: Playwright
+- **Browsers**: Chromium, Firefox, Safari
+- **Test Environment**: Spins up full application stack with MongoDB
+- **Reports**: HTML reports with screenshots/videos on failure
+
+### CI/CD Pipeline
+The project uses GitHub Actions with multiple jobs:
+- **Lint**: ESLint and Prettier formatting checks
+- **Test**: Jest unit tests across Node.js 18, 20, 22
+- **Docker**: Build verification and security scanning (Trivy, Hadolint)
+- **E2E**: Playwright tests against full application stack
 
 ## Important Notes
 

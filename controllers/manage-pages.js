@@ -2,6 +2,18 @@ var pageModel = require('../mongo/models/pageModel');
 var logger = require('../logger');
 const tracer = require('dd-trace');
 
+var getAllPages = () => {
+  return pageModel.find({}, function(err, pages) {
+    if(err){
+      logger.error('Error encountered' + err);
+      throw err;
+    } 
+
+    logger.info('API Successfully found all pages, count: ' + pages.length);
+    return pages;
+  });
+}
+
 var getPageById = (page_id) => {
   return pageModel.find({id: page_id}, function(err, pages) {
     if(err){
@@ -116,12 +128,14 @@ async function getNextPageId() {
 // Setup Manual Tracing using the wrapper
 createPage = tracer.wrap('manage-pages.createPage', createPage);
 deletePageById = tracer.wrap('manage-pages.deletePageById', deletePageById);
+getAllPages = tracer.wrap('manage-pages.getAllPages', getAllPages);
 getPageById = tracer.wrap('manage-pages.getPageById', getPageById);
 updatePage = tracer.wrap('manage-pages.updatePage', updatePage);
 
 module.exports = {
     createPage: createPage,
     deletePageById: deletePageById,
+    getAllPages: getAllPages,
     getPageById: getPageById,
     updatePage: updatePage
 }

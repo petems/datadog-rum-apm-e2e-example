@@ -42,9 +42,14 @@ describe('Page Management API', () => {
     });
 
     it('should handle database errors gracefully', async () => {
-      // Mock a database error
-      const originalFind = mongoose.Model.find;
-      mongoose.Model.find = jest.fn().mockRejectedValue(new Error('Database error'));
+      // Mock the Page model's find method to throw an error
+      const PageModel = require('../../mongo/models/pageModel');
+      const originalFind = PageModel.find;
+      PageModel.find = jest.fn().mockImplementation((query, callback) => {
+        const error = new Error('Database error');
+        if (callback) callback(error);
+        return Promise.reject(error);
+      });
 
       const response = await request(app)
         .get('/api/pages')
@@ -53,7 +58,7 @@ describe('Page Management API', () => {
       expect(response.body).toHaveProperty('error');
 
       // Restore original method
-      mongoose.Model.find = originalFind;
+      PageModel.find = originalFind;
     });
   });
 
@@ -72,7 +77,7 @@ describe('Page Management API', () => {
 
       expect(response.body).toHaveProperty('_id');
       expect(response.body.title).toBe(pageData.title);
-      expect(response.body.content).toBe(pageData.content);
+      expect(response.body.body).toBe(pageData.content);
     });
 
     it('should validate required fields', async () => {
@@ -100,6 +105,35 @@ describe('Page Management API', () => {
       await request(app)
         .get('/stylesheets/style.css')
         .expect(200);
+    });
+  });
+
+  describe('Additional API Coverage', () => {
+    it('should handle invalid page creation with missing title and content', async () => {
+      const response = await request(app)
+        .post('/api/pages')
+        .send({})
+        .expect(400);
+
+      expect(response.body).toHaveProperty('error');
+      expect(response.body.error).toBe('Title and content are required');
+    });
+
+    it('should create page with optional author field', async () => {
+      const pageData = {
+        title: 'Test Page with Author',
+        content: 'This is test content with author',
+        author: 'John Doe'
+      };
+
+      const response = await request(app)
+        .post('/api/pages')
+        .send(pageData)
+        .expect(201);
+
+      expect(response.body).toHaveProperty('_id');
+      expect(response.body.title).toBe(pageData.title);
+      expect(response.body.body).toBe(pageData.content);
     });
   });
 });
