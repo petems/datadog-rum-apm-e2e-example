@@ -2,22 +2,22 @@ const request = require('supertest');
 
 jest.mock('./config/rum', () => ({
   clientToken: 'test-token',
-  applicationId: 'test-app-id'
+  applicationId: 'test-app-id',
 }));
 
 jest.mock('dd-trace', () => ({
   init: jest.fn(),
   trace: jest.fn(),
-  wrap: jest.fn()
+  wrap: jest.fn(),
 }));
 
 jest.mock('./logger', () => ({
   info: jest.fn(),
-  error: jest.fn()
+  error: jest.fn(),
 }));
 
 jest.mock('./mongo/models/pageModel', () => ({
-  find: jest.fn()
+  find: jest.fn(),
 }));
 
 jest.mock('./mongo', () => ({}));

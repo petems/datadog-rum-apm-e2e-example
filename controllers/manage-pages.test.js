@@ -126,11 +126,9 @@ describe('manage-pages controller', () => {
 
       const result = await createPage(body);
 
-      expect(pageModel.find).toHaveBeenCalledWith(
-        { id: { $ne: '' } },
-        'id',
-        { sort: { id: 'descending' } }
-      );
+      expect(pageModel.find).toHaveBeenCalledWith({ id: { $ne: '' } }, 'id', {
+        sort: { id: 'descending' },
+      });
       expect(pageModel).toHaveBeenCalledWith({
         id: 6,
         title: 'New Page',
@@ -159,6 +157,5 @@ describe('manage-pages controller', () => {
         updatedDate: expect.any(Number),
       });
     });
-
   });
 });

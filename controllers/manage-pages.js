@@ -81,11 +81,7 @@ async function getNextPageId() {
   // TODO: why is this throwing NotFoundError that is bypassing the error handling
   try {
     const latestPage = await pageModel
-      .find(
-        { id: { $ne: '' } },
-        'id',
-        { sort: { id: 'descending' } }
-      )
+      .find({ id: { $ne: '' } }, 'id', { sort: { id: 'descending' } })
       .limit(1);
 
     const newId = latestPage.length === 0 ? 1 : latestPage[0].id + 1;

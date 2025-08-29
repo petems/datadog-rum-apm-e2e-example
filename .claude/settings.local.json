@@ -1,8 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(npm run test:coverage:*)"
-    ],
+    "allow": ["Bash(npm run test:coverage:*)"],
     "deny": [],
     "ask": []
   }

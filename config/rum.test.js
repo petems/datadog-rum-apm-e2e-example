@@ -16,9 +16,9 @@ describe('RUM Configuration', () => {
     delete process.env.DD_ENV;
     delete process.env.DD_SERVICE;
     delete process.env.DD_VERSION;
-    
+
     const rumConfig = require('./rum');
-    
+
     expect(rumConfig.clientToken).toBeUndefined();
     expect(rumConfig.applicationId).toBeUndefined();
     expect(rumConfig.env).toBe('development');
@@ -32,9 +32,9 @@ describe('RUM Configuration', () => {
     process.env.DD_ENV = 'production';
     process.env.DD_SERVICE = 'custom-service';
     process.env.DD_VERSION = '3.0.0';
-    
+
     const rumConfig = require('./rum');
-    
+
     expect(rumConfig.clientToken).toBe('test-client-token');
     expect(rumConfig.applicationId).toBe('test-app-id');
     expect(rumConfig.env).toBe('production');
@@ -44,23 +44,23 @@ describe('RUM Configuration', () => {
 
   it('should append "-ui" to DD_SERVICE for service name', () => {
     process.env.DD_SERVICE = 'my-app';
-    
+
     const rumConfig = require('./rum');
-    
+
     expect(rumConfig.service).toBe('my-app-ui');
   });
 
   it('should use default service name when DD_SERVICE is not set', () => {
     delete process.env.DD_SERVICE;
-    
+
     const rumConfig = require('./rum');
-    
+
     expect(rumConfig.service).toBe('datablog-ui');
   });
 
   it('should have all required RUM properties', () => {
     const rumConfig = require('./rum');
-    
+
     expect(rumConfig).toHaveProperty('clientToken');
     expect(rumConfig).toHaveProperty('applicationId');
     expect(rumConfig).toHaveProperty('env');
@@ -70,9 +70,9 @@ describe('RUM Configuration', () => {
 
   it('should handle empty DD_SERVICE environment variable', () => {
     process.env.DD_SERVICE = '';
-    
+
     const rumConfig = require('./rum');
-    
+
     expect(rumConfig.service).toBe('datablog-ui');
   });
 
@@ -80,9 +80,9 @@ describe('RUM Configuration', () => {
     process.env.DD_ENV = 'staging';
     process.env.DD_VERSION = '1.5.0';
     delete process.env.DD_SERVICE;
-    
+
     const rumConfig = require('./rum');
-    
+
     expect(rumConfig.env).toBe('staging');
     expect(rumConfig.version).toBe('1.5.0');
     expect(rumConfig.service).toBe('datablog-ui');

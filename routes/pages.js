@@ -28,7 +28,7 @@ router.get('/:page_id', async (req, res) => {
 
   try {
     const response = await fetch(`http://localhost:3000/api/page/${page_id}`);
-    
+
     if (response.ok) {
       const pageArr = await response.json();
       const page = pageArr[0];
@@ -64,7 +64,6 @@ router.get('/:page_id', async (req, res) => {
       rum,
     });
   }
-
 });
 
 /* GET new page listing. */
@@ -92,7 +91,7 @@ router.get('/:page_id/edit', async (req, res) => {
 
   try {
     const response = await fetch(`http://localhost:3000/api/page/${page_id}`);
-    
+
     if (response.ok) {
       const pageArr = await response.json();
       const page = pageArr[0];
@@ -128,7 +127,6 @@ router.get('/:page_id/edit', async (req, res) => {
       rum,
     });
   }
-
 });
 
 module.exports = router;
