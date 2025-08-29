@@ -1,4 +1,4 @@
-const tracer = require('dd-trace');
+require('dd-trace');
 var logger = require('../logger');
 var express = require('express');
 var router = express.Router();
