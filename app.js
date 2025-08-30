@@ -35,10 +35,12 @@ const indexRouter = require('./routes/index');
 const pagesRouter = require('./routes/pages');
 const apiRouter = require('./routes/api');
 const apiPagesRouter = require('./routes/api-pages');
+const authRouter = require('./routes/auth');
 app.use('/', indexRouter);
 app.use('/page', pagesRouter);
 app.use('/api/page', apiRouter);
 app.use('/api/pages', apiPagesRouter);
+app.use('/api/auth', authRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

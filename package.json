@@ -35,6 +35,12 @@
     "escape-html": "^1.0.3",
     "express": "^4.21.1",
     "express-rate-limit": "^8.0.1",
+    "cookie-parser": "^1.4.7",
+    "helmet": "^7.0.0",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2",
+    "argon2": "^0.40.3",
+    "bcryptjs": "^2.4.3",
     "hot-shots": "^11.2.0",
     "http-errors": "~2.0.0",
     "mongoose": "^5.9.7"
