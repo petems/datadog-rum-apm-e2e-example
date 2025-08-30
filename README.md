@@ -153,6 +153,61 @@ npm run format:check      # Check formatting
 - **E2E Tests**: Playwright for full user journey testing
 - **Visual Regression**: Automated screenshot comparison
 
+### Auth & CSRF
+
+- The auth API lives under `/api/auth` with CSRF protection enabled.
+- Obtain a CSRF token first, then include it in the `csrf-token` header for state-changing requests.
+
+Example flow with curl (replace placeholders):
+
+1. Fetch CSRF token
+
+```
+curl -i http://localhost:3000/api/auth/csrf
+```
+
+2. Register
+
+```
+curl -i -X POST http://localhost:3000/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -H 'csrf-token: <csrfToken>' \
+  --data '{"email":"me@example.com","password":"Password1"}'
+```
+
+3. Login (stores refresh cookie and returns access token)
+
+```
+curl -i -X POST http://localhost:3000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -H 'csrf-token: <csrfToken>' \
+  --data '{"email":"me@example.com","password":"Password1"}'
+```
+
+4. Refresh access token (requires refresh_token cookie)
+
+```
+curl -i -X POST http://localhost:3000/api/auth/refresh \
+  -H 'csrf-token: <csrfToken>' \
+  --cookie 'refresh_token=<value>'
+```
+
+5. Get current user
+
+```
+curl -i http://localhost:3000/api/auth/me \
+  -H 'Authorization: Bearer <accessToken>'
+```
+
+6. Logout (invalidates refresh via tokenVersion bump)
+
+```
+curl -i -X POST http://localhost:3000/api/auth/logout \
+  -H 'Authorization: Bearer <accessToken>' \
+  -H 'csrf-token: <csrfToken>' \
+  --cookie 'refresh_token=<value>'
+```
+
 ### Monitoring Development
 
 1. **Custom Instrumentation**: See examples in `controllers/manage-pages.js`

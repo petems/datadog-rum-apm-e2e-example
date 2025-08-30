@@ -1,4 +1,3 @@
-const crypto = require('crypto');
 let argon2;
 try {
   // Optional dependency; fallback to bcryptjs
@@ -31,18 +30,8 @@ async function verifyPassword(password, hash) {
   return bcrypt.compare(password, hash);
 }
 
-function timingSafeEqual(a, b) {
-  const aBuf = Buffer.from(a);
-  const bBuf = Buffer.from(b);
-  if (aBuf.length !== bBuf.length) {
-    return false;
-  }
-  return crypto.timingSafeEqual(aBuf, bBuf);
-}
-
 module.exports = {
   validatePasswordPolicy,
   hashPassword,
   verifyPassword,
-  timingSafeEqual,
 };

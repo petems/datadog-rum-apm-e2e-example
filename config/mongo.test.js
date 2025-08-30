@@ -25,6 +25,7 @@ describe('Mongo Configuration', () => {
 
   it('should use mongo service URI when DOCKER env is set', () => {
     process.env.DOCKER = 'true';
+    delete process.env.MONGODB_URI;
 
     const mongoConfig = require('./mongo');
 

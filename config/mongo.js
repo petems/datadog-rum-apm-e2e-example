@@ -1,5 +1,8 @@
-let uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-if (process.env.DOCKER && !process.env.MONGODB_URI) {
+// Preserve legacy test expectations: default host, and DOCKER override
+let uri = 'mongodb://localhost:27017';
+if (process.env.MONGODB_URI) {
+  uri = process.env.MONGODB_URI;
+} else if (process.env.DOCKER) {
   uri = 'mongodb://mongo:27017';
 }
 

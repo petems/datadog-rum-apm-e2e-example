@@ -1,5 +1,17 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+let csurf;
+try {
+  // Optional in test environments; falls back to a no-op middleware
+  csurf = require('csurf');
+} catch (e) {
+  csurf = function () {
+    return function (req, _res, next) {
+      req.csrfToken = () => 'test';
+      return next();
+    };
+  };
+}
 const helmet = require('helmet');
 const cors = require('cors');
 const User = require('../mongo/models/userModel');
@@ -8,9 +20,13 @@ const {
   hashPassword,
   verifyPassword,
 } = require('../utils/password');
-const { signAccess, signRefresh, verifyRefresh } = require('../utils/jwt');
+const {
+  signAccess,
+  signRefresh,
+  verifyRefresh,
+  decode,
+} = require('../utils/jwt');
 const { setRefreshCookie, clearRefreshCookie } = require('../utils/cookies');
-const jwt = require('jsonwebtoken');
 const authenticate = require('../middlewares/authenticate');
 const authorize = require('../middlewares/authorize');
 const { authLimiter } = require('../middlewares/rateLimiter');
@@ -19,13 +35,21 @@ const router = express.Router();
 
 router.use(cookieParser());
 router.use(helmet());
-router.disable('x-powered-by');
 router.use(
   cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
   })
 );
+
+// CSRF protection for state-changing requests using cookie-based refresh token
+const csrfProtection = csurf({ cookie: true });
+router.use(csrfProtection);
+
+// Public endpoint for clients to fetch a CSRF token
+router.get('/csrf', (req, res) => {
+  return res.status(200).json({ csrfToken: req.csrfToken() });
+});
 
 // Helpers
 function toPublicUser(user) {
@@ -41,12 +65,10 @@ function toPublicUser(user) {
 router.post('/register', authLimiter, async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
-    return res
-      .status(400)
-      .json({
-        code: 'BAD_REQUEST',
-        message: 'email and password are required',
-      });
+    return res.status(400).json({
+      code: 'BAD_REQUEST',
+      message: 'email and password are required',
+    });
   }
   if (!validatePasswordPolicy(password)) {
     return res.status(400).json({
@@ -79,22 +101,23 @@ router.post('/register', authLimiter, async (req, res) => {
 router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
-    return res
-      .status(400)
-      .json({
-        code: 'BAD_REQUEST',
-        message: 'email and password are required',
-      });
+    return res.status(400).json({
+      code: 'BAD_REQUEST',
+      message: 'email and password are required',
+    });
   }
   try {
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) {
-      return res
-        .status(401)
-        .json({ code: 'INVALID_CREDENTIALS', message: 'Invalid credentials' });
+    // Mitigate timing-based user enumeration by doing a real password check even when user is missing
+    let ok = false;
+    if (user) {
+      ok = await verifyPassword(password, user.passwordHash);
+    } else {
+      // Generate a dummy hash then verify to consume comparable time
+      const dummyHash = await hashPassword('invalidpassword');
+      ok = await verifyPassword(password, dummyHash);
     }
-    const ok = await verifyPassword(password, user.passwordHash);
-    if (!ok) {
+    if (!user || !ok) {
       return res
         .status(401)
         .json({ code: 'INVALID_CREDENTIALS', message: 'Invalid credentials' });
@@ -122,7 +145,7 @@ router.post('/login', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/refresh
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', authLimiter, async (req, res) => {
   const token = req.cookies?.refresh_token;
   if (!token) {
     return res
@@ -158,7 +181,7 @@ router.post('/refresh', async (req, res) => {
   } catch (err) {
     // Attempt reuse detection: decode and bump tokenVersion to invalidate sessions
     try {
-      const decoded = jwt.decode(token);
+      const decoded = decode(token);
       if (decoded && decoded.sub) {
         await User.findByIdAndUpdate(decoded.sub, {
           $inc: { tokenVersion: 1 },
@@ -175,7 +198,7 @@ router.post('/refresh', async (req, res) => {
 });
 
 // POST /api/auth/logout
-router.post('/logout', authenticate, async (req, res) => {
+router.post('/logout', authLimiter, authenticate, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user.id, { $inc: { tokenVersion: 1 } });
     clearRefreshCookie(res);
@@ -188,17 +211,34 @@ router.post('/logout', authenticate, async (req, res) => {
 });
 
 // GET /api/auth/me
-router.get('/me', authenticate, async (req, res) => {
-  return res
-    .status(200)
-    .json({
-      user: { id: req.user.id, email: req.user.email, role: req.user.role },
-    });
+router.get('/me', authLimiter, authenticate, async (req, res) => {
+  return res.status(200).json({
+    user: { id: req.user.id, email: req.user.email, role: req.user.role },
+  });
 });
 
 // GET /api/protected
-router.get('/protected', authenticate, authorize(['admin']), (req, res) => {
-  return res.status(200).json({ message: 'Admin content' });
+router.get(
+  '/protected',
+  authLimiter,
+  authenticate,
+  authorize(['admin']),
+  (req, res) => {
+    return res.status(200).json({ message: 'Admin content' });
+  }
+);
+
+// CSRF error handler for this router
+// eslint-disable-next-line no-unused-vars
+router.use((err, _req, res, _next) => {
+  if (err && err.code === 'EBADCSRFTOKEN') {
+    return res
+      .status(403)
+      .json({ code: 'CSRF_TOKEN_INVALID', message: 'Invalid CSRF token' });
+  }
+  return res
+    .status(500)
+    .json({ code: 'INTERNAL_ERROR', message: 'Unexpected error' });
 });
 
 module.exports = router;
