@@ -42,14 +42,14 @@ router.get('/:page_id', async (req, res) => {
       res.render('page', { ...page, rum });
     } else if (response.status === 404) {
       logger.warn({ page_id }, `GET Page: ${page_id} not found`);
-      res.render('error', {
+      res.status(404).render('error', {
         statusCode: 404,
         message: 'Page not found',
         rum,
       });
     } else {
       logger.error(`Unexpected output: ${response.status}`);
-      res.render('error', {
+      res.status(response.status).render('error', {
         statusCode: response.status,
         message: 'Unexpected Error',
         rum,
@@ -57,7 +57,7 @@ router.get('/:page_id', async (req, res) => {
     }
   } catch (err) {
     logger.error(`Error: ${err.message}`);
-    res.render('error', {
+    res.status(500).render('error', {
       statusCode: 500,
       message: 'Internal Server Error',
       rum,
@@ -105,14 +105,14 @@ router.get('/:page_id/edit', async (req, res) => {
       res.render('edit-page', { ...page, rum });
     } else if (response.status === 404) {
       logger.warn({ page_id }, `GET Edit Page: ${page_id} not found`);
-      res.render('error', {
+      res.status(404).render('error', {
         statusCode: 404,
         message: 'Page not found',
         rum,
       });
     } else {
       logger.error(`Unexpected output: ${response.status}`);
-      res.render('error', {
+      res.status(response.status).render('error', {
         statusCode: response.status,
         message: 'Unexpected Error',
         rum,
@@ -120,7 +120,7 @@ router.get('/:page_id/edit', async (req, res) => {
     }
   } catch (err) {
     logger.error(`Error: ${err.message}`);
-    res.render('error', {
+    res.status(500).render('error', {
       statusCode: 500,
       message: 'Internal Server Error',
       rum,
