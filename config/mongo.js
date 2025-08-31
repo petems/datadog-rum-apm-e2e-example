@@ -4,8 +4,6 @@ if (process.env.DOCKER) {
 }
 
 const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   dbName: 'pages',
 };
 
