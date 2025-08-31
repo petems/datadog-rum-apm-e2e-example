@@ -17,22 +17,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
         with:
-          node-version: '22.18.0'
-          cache: 'npm'
+          context: .
+          push: false
+          load: true
+          tags: datablog:test
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Start application
+      - name: Run container
         run: |
-          npm start &
-          echo $! > app.pid
-          sleep 8
-        env:
-          NODE_ENV: production
+          docker run -d --name app -p 3000:3000 -e NODE_ENV=production datablog:test
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000 >/dev/null; then echo "app up"; break; fi; sleep 2; done
 
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
@@ -41,8 +41,7 @@ jobs:
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
 
-      - name: Stop application
+      - name: Stop container
         if: always()
         run: |
-          kill $(cat app.pid) || true
-
+          docker rm -f app || true

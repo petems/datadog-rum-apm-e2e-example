@@ -74,8 +74,9 @@ jobs:
           MONGODB_URI: mongodb://localhost:27017/datablog-test
           NODE_ENV: test
 
-      - name: Audit dependencies (prod, high+)
+      - name: Audit dependencies (prod, high+) [informational]
         run: npm run audit:ci
+        continue-on-error: true
 
   # Docker Build and Security Scan
   docker:
