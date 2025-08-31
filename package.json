@@ -19,7 +19,7 @@
     "prepare": "husky install || true",
     "audit": "npm audit --prod --audit-level=high",
     "audit:all": "npm audit --audit-level=moderate",
-    "audit:ci": "npm audit --prod --audit-level=high"
+    "audit:ci": "npm audit --prod --audit-level=high --json"
   },
   "lint-staged": {
     "*.js": [

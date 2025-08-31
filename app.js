@@ -14,6 +14,7 @@ const path = require('path');
 const logger = require('./logger');
 require('./mongo');
 const helmet = require('helmet');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -28,7 +29,13 @@ app.set('view engine', 'ejs');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Security headers via Helmet
+// Per-request CSP nonce for inline scripts in templates
+app.use((req, res, next) => {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+
+// Security headers via Helmet (CSP with nonces, no unsafe-inline)
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -38,19 +45,19 @@ app.use(
         'default-src': ["'self'"],
         'script-src': [
           "'self'",
-          "'unsafe-inline'",
+          (req, res) => `'nonce-${res.locals.cspNonce}'`,
           'https://www.datadoghq-browser-agent.com',
           'https://cdn.jsdelivr.net',
         ],
         'style-src': [
           "'self'",
-          "'unsafe-inline'",
           'https://cdn.jsdelivr.net',
           'https://fonts.googleapis.com',
         ],
         'font-src': ["'self'", 'https://fonts.gstatic.com'],
         'img-src': ["'self'", 'data:'],
         'connect-src': ["'self'", 'https://*.datadoghq.com'],
+        'frame-ancestors': ["'self'"],
       },
     },
     crossOriginEmbedderPolicy: false, // for compatibility with certain libs
