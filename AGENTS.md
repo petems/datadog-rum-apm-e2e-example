@@ -37,7 +37,8 @@
 ## Branch Strategy & Naming
 
 - Base branch: `main`.
-- Prefix branches by intent: `feature/`, `fix/`, `chore/`, `deps/`, `docs/`, `refactor/`, `perf/`, `test/`, `build/`, `ci/`, `release/`.
+- Prefix branches by intent: `feature/`, `fix/`, `chore/`, `deps/`, `docs/`, `refactor/`, `perf/`,
+  `test/`, `build/`, `ci/`, `release/`.
 - Format: `type/short-slug` or `type/<issue-number>-short-slug` or `type/scope/short-slug`.
 - Slug: kebab-case, imperative mood, 3–6 words max.
 - Examples:
@@ -49,13 +50,17 @@
 ## Commit & Pull Request Guidelines
 
 - Conventional Commits: use `type(scope)!: short summary`.
-  - Types: `feat`, `fix`, `chore`, `deps`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `revert`.
+  - Types: `feat`, `fix`, `chore`, `deps`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`,
+    `revert`.
   - Summary: present tense, lower case, ≤ 72 chars.
   - Body (optional): explain the what and why; wrap at 100 cols.
   - Footer (when applicable): `BREAKING CHANGE: ...`, `Closes #123`, `Refs #456`.
-- Keep commits focused; one logical change per commit. Squash locally if needed to keep history clean.
-- Prefer squash-merge; use a Conventional Commit-style PR title so the squashed commit is well-formed.
-- Write focused PRs with a clear description, linked issues, and test evidence (coverage summary/E2E output).
+- Keep commits focused; one logical change per commit. Squash locally if needed to keep history
+  clean.
+- Prefer squash-merge; use a Conventional Commit-style PR title so the squashed commit is
+  well-formed.
+- Write focused PRs with a clear description, linked issues, and test evidence (coverage summary/E2E
+  output).
 - For UI changes, run `npm run screenshot` and include updated `docs/screenshots` in the PR.
 - Pre-commit runs `lint-staged` and tests via Husky; ensure both pass locally.
 
