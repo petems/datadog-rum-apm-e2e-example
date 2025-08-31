@@ -28,6 +28,10 @@ test-e2e-ui:
 lint:
     npm run lint
 
+# Lint strictly (CI parity)
+lint-ci:
+    npm run lint:ci
+
 # Fix linting issues
 lint-fix:
     npm run lint:fix
@@ -94,9 +98,16 @@ clean:
 dev-check:
     #!/usr/bin/env bash
     echo "🔍 Running development checks..."
-    just lint
+    just lint-ci
     just format-check
     just test
+
+# Security checks bundle
+security:
+    #!/usr/bin/env bash
+    echo "🛡️  Running security checks..."
+    npm run audit
+    echo "✅ Dependency audit complete"
 
 # Complete workflow: setup, seed, screenshot
 workflow:

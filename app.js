@@ -13,6 +13,7 @@ const express = require('express');
 const path = require('path');
 const logger = require('./logger');
 require('./mongo');
+const helmet = require('helmet');
 
 const app = express();
 
@@ -26,6 +27,35 @@ app.set('view engine', 'ejs');
 // Handlers for JSON and URL Encodings
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Security headers via Helmet
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        // Allow our own assets and trusted CDNs used in views
+        'default-src': ["'self'"],
+        'script-src': [
+          "'self'",
+          "'unsafe-inline'",
+          'https://www.datadoghq-browser-agent.com',
+          'https://cdn.jsdelivr.net',
+        ],
+        'style-src': [
+          "'self'",
+          "'unsafe-inline'",
+          'https://cdn.jsdelivr.net',
+          'https://fonts.googleapis.com',
+        ],
+        'font-src': ["'self'", 'https://fonts.gstatic.com'],
+        'img-src': ["'self'", 'data:'],
+        'connect-src': ["'self'", 'https://*.datadoghq.com'],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // for compatibility with certain libs
+  })
+);
 
 // Create public path containing images, javascript, and stylesheets
 app.use(express.static(path.join(__dirname, 'public')));

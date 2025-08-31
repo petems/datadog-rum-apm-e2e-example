@@ -1,0 +1,2 @@
+10020	IGNORE	Ignore X-Frame-Options to rely on CSP frame-ancestors
+10063	IGNORE	Ignore X-Content-Type-Options if Helmet sets it via CSP

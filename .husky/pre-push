@@ -1,5 +1,11 @@
 #!/usr/bin/env sh
 
-# Run unit tests quickly before pushing
+# Lightweight pre-push to avoid blocking on audits locally
+set -e
+
+# Lint strictly (no warnings)
+npm run lint:ci
+
+# Run unit tests fast
 npm test --silent
 

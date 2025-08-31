@@ -1,5 +1,6 @@
 const js = require('@eslint/js');
 const globals = require('globals');
+const regexp = require('eslint-plugin-regexp');
 
 module.exports = [
   js.configs.recommended,
@@ -14,6 +15,9 @@ module.exports = [
         ...globals.jest,
         ...globals.node,
       },
+    },
+    plugins: {
+      regexp,
     },
     rules: {
       // Error prevention
@@ -37,6 +41,10 @@ module.exports = [
       'no-eval': 'error',
       'no-implied-eval': 'error',
       'no-new-func': 'error',
+
+      // Regex safety to avoid catastrophic backtracking (ReDoS)
+      'regexp/no-super-linear-backtracking': 'error',
+      'regexp/no-useless-quantifier': 'warn',
     },
   },
   {
