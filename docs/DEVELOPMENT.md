@@ -168,10 +168,9 @@ const wrappedFunction = tracer.wrap('function.name', originalFunction);
 
 ```javascript
 // mongo/index.js
-mongoose.connect('mongodb://localhost:27017/datablog', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+// Mongoose 8 / MongoDB Node.js driver >=4 no longer require
+// useNewUrlParser/useUnifiedTopology options.
+mongoose.connect('mongodb://localhost:27017/datablog');
 ```
 
 #### Page Model

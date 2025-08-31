@@ -36,10 +36,7 @@ async function seedData() {
     logger.info('🌱 Seeding sample data...');
 
     // Connect to MongoDB
-    await mongoose.connect('mongodb://localhost:27017/datablog', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect('mongodb://localhost:27017/datablog');
 
     // Clear existing data
     await pageModel.deleteMany({});
