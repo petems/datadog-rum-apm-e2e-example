@@ -1,4 +1,9 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
-npx lint-staged && npm test
+# Only run on normal commits (skip in CI or merge commits)
+if [ -n "$CI" ]; then
+  exit 0
+fi
+
+# Run fast checks on staged files
+npx --no -- lint-staged

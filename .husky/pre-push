@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+# Run unit tests quickly before pushing
+npm test --silent
+
