@@ -40,9 +40,13 @@ let createPage = async body => {
 
 let deletePageById = async page_id => {
   const numericId = Number(page_id);
-  await pageModel.deleteOne({ id: numericId });
-  logger.info(`Successful delete of page: ${page_id}`);
-  return true;
+  const result = await pageModel.deleteOne({ id: numericId });
+  if (result && result.deletedCount > 0) {
+    logger.info(`Successful delete of page: ${page_id}`);
+    return true;
+  }
+  logger.warn({ page_id }, 'No document deleted');
+  return false;
 };
 
 let updatePage = async (pageModel, body) => {

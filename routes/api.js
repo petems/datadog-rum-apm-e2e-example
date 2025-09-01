@@ -8,16 +8,19 @@ const escape = require('escape-html');
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
 
+// Validate page_id once for all routes using Express param middleware
+router.param('page_id', (req, res, next, id) => {
+  if (!/^\d+$/.test(id)) {
+    res.status(400).send('Invalid page id');
+    return;
+  }
+  next();
+});
+
 /* GET individual page listing. */
 router.get('/:page_id', async (req, res) => {
   const page_id = req.params.page_id;
   logger.info({ headers: req.headers }, `API Requesting Page: ${page_id}`);
-
-  // Validate numeric id to avoid injection and unexpected casting
-  if (!/^\d+$/.test(page_id)) {
-    res.status(400).send('Invalid page id');
-    return;
-  }
 
   const result = await managePages.getPageById(Number(page_id));
 
@@ -49,12 +52,6 @@ router.put('/:page_id', async (req, res) => {
   const page_id = req.params.page_id;
   logger.info({ headers: req.headers }, `API Updating Page: ${page_id}`);
 
-  // Validate numeric id
-  if (!/^\d+$/.test(page_id)) {
-    res.status(400).send('Invalid page id');
-    return;
-  }
-
   const pageToEdit = await managePages.getPageById(Number(page_id));
 
   if (pageToEdit.length === 0) {
@@ -74,12 +71,6 @@ router.put('/:page_id', async (req, res) => {
 router.delete('/:page_id', async (req, res) => {
   const page_id = req.params.page_id;
   logger.info({ headers: req.headers }, `API Deleting Page: ${page_id}`);
-
-  // Validate numeric id
-  if (!/^\d+$/.test(page_id)) {
-    res.status(400).send('Invalid page id');
-    return;
-  }
 
   const result = await managePages.deletePageById(Number(page_id));
 
