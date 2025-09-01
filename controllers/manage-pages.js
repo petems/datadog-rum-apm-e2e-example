@@ -9,7 +9,9 @@ let getAllPages = async () => {
 };
 
 let getPageById = async page_id => {
-  const pages = await pageModel.find({ id: page_id });
+  // Ensure numeric lookup to avoid implicit casting or operator injection
+  const numericId = Number(page_id);
+  const pages = await pageModel.find({ id: numericId });
 
   if (pages.length === 0) {
     logger.warn(`Page: ${page_id} not found`);
@@ -37,9 +39,14 @@ let createPage = async body => {
 };
 
 let deletePageById = async page_id => {
-  await pageModel.deleteOne({ id: page_id });
-  logger.info(`Successful delete of page: ${page_id}`);
-  return true;
+  const numericId = Number(page_id);
+  const result = await pageModel.deleteOne({ id: numericId });
+  if (result && result.deletedCount > 0) {
+    logger.info(`Successful delete of page: ${page_id}`);
+    return true;
+  }
+  logger.warn({ page_id }, 'No document deleted');
+  return false;
 };
 
 let updatePage = async (pageModel, body) => {

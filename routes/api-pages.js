@@ -8,6 +8,10 @@ const managePages = require('../controllers/manage-pages');
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
 
+// Payload limits for page creation
+const MAX_TITLE_LENGTH = 200;
+const MAX_CONTENT_LENGTH = 10000;
+
 /* GET all pages listing. */
 router.get('/', async (req, res) => {
   try {
@@ -28,6 +32,14 @@ router.post('/', async (req, res) => {
     // Validate required fields
     if (!req.body.title || !req.body.content) {
       return res.status(400).json({ error: 'Title and content are required' });
+    }
+
+    // Basic length limits to avoid overly large payloads
+    if (
+      req.body.title.length > MAX_TITLE_LENGTH ||
+      req.body.content.length > MAX_CONTENT_LENGTH
+    ) {
+      return res.status(413).json({ error: 'Payload too large' });
     }
 
     // Map content to body for consistency with existing controller
