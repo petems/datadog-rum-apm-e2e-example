@@ -32,6 +32,7 @@
     ]
   },
   "dependencies": {
+    "zod": "^3.23.8",
     "body-parser": "^2.2.0",
     "bunyan": "^1.8.15",
     "dd-trace": "^5.28.0",

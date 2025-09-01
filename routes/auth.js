@@ -20,6 +20,19 @@ const { setRefreshCookie, clearRefreshCookie } = require('../utils/cookies');
 const authenticate = require('../middlewares/authenticate');
 const authorize = require('../middlewares/authorize');
 const { authLimiter } = require('../middlewares/rateLimiter');
+const { z } = require('zod');
+
+// Validation schemas
+const emailSchema = z
+  .string()
+  .email()
+  .transform(v => v.toLowerCase());
+const passwordSchema = z.string().min(8);
+const registerSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+const loginSchema = z.object({ email: emailSchema, password: z.string() });
 
 const router = express.Router();
 
@@ -53,13 +66,13 @@ function toPublicUser(user) {
 
 // POST /api/auth/register
 router.post('/register', authLimiter, async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) {
-    return res.status(400).json({
-      code: 'BAD_REQUEST',
-      message: 'email and password are required',
-    });
+  const parsed = registerSchema.safeParse(req.body || {});
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ code: 'BAD_REQUEST', message: 'Invalid payload' });
   }
+  const { email, password } = parsed.data;
   if (!validatePasswordPolicy(password)) {
     return res.status(400).json({
       code: 'WEAK_PASSWORD',
@@ -67,7 +80,7 @@ router.post('/register', authLimiter, async (req, res) => {
     });
   }
   try {
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const existing = await User.findOne({ email: { $eq: email } }).lean();
     if (existing) {
       return res
         .status(409)
@@ -90,15 +103,15 @@ router.post('/register', authLimiter, async (req, res) => {
 
 // POST /api/auth/login
 router.post('/login', authLimiter, async (req, res) => {
-  const { email, password } = req.body || {};
-  if (!email || !password) {
-    return res.status(400).json({
-      code: 'BAD_REQUEST',
-      message: 'email and password are required',
-    });
+  const parsed = loginSchema.safeParse(req.body || {});
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ code: 'BAD_REQUEST', message: 'Invalid payload' });
   }
+  const { email, password } = parsed.data;
   try {
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: { $eq: email } }).lean();
     // Mitigate timing-based user enumeration by doing a real password check even when user is missing
     let ok = false;
     if (user) {

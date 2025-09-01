@@ -21,6 +21,7 @@ if (process.env.NODE_ENV !== 'test') {
   require('./mongo');
 }
 const helmet = require('helmet');
+const escape = require('escape-html');
 const crypto = require('crypto');
 
 const app = express();
@@ -75,6 +76,18 @@ app.use(
     referrerPolicy: { policy: 'no-referrer' },
   })
 );
+
+// Additional security headers (manual to avoid API changes across Helmet versions)
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  // Permissions-Policy (replacement for deprecated Feature-Policy)
+  res.setHeader(
+    'Permissions-Policy',
+    'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+  );
+  next();
+});
 
 // Robots.txt and sitemap.xml with dynamic base URL
 function inferBaseUrl(req) {
@@ -171,12 +184,12 @@ app.use(function (err, req, res, _next) {
   // Render the error page
   const statusCode = err.status || 500;
   res.status(statusCode);
-  const errorDetails = {
-    statusCode,
-    message: err.message,
-  };
-
-  res.render('error', { ...errorDetails, rum });
+  // Avoid reflecting raw error messages; sanitize and limit in non-dev
+  const message =
+    process.env.NODE_ENV === 'development'
+      ? escape(err.message || 'Unexpected error')
+      : 'An unexpected error occurred';
+  res.render('error', { statusCode, message, rum });
 });
 
 module.exports = app;

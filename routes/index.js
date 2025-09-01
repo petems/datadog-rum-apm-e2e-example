@@ -28,9 +28,11 @@ router.get(['/', '/v1'], indexRateLimit, async function (req, res) {
   try {
     const pages = await pageModel
       .find({}, null, { sort: { id: 'descending' } })
-      .limit(25);
+      .limit(25)
+      .lean();
 
     logger.info(`Found pages: ${pages.length}`);
+    // Render with controlled, static view and known-safe locals
     return res.render('index', { title: 'Home Page', pages, rum });
   } catch (err) {
     // Be resilient during startup or transient DB errors
