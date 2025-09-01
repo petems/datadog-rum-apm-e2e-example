@@ -29,8 +29,8 @@ router.get('/:page_id', async (req, res) => {
   // Increment a view metric; safe no-op during tests
   try {
     dogstatsd.increment('page.views', [`page:${page_id}`]);
-  } catch {
-    // ignore StatsD errors to prevent route failures
+  } catch (err) {
+    logger.warn({ err }, 'Failed to send StatsD metric; ignoring error.');
   }
 
   try {
