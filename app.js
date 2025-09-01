@@ -72,6 +72,10 @@ const indexRouter = require('./routes/index');
 const pagesRouter = require('./routes/pages');
 const apiRouter = require('./routes/api');
 const apiPagesRouter = require('./routes/api-pages');
+// Lightweight health endpoint (no DB / templates)
+app.get('/healthz', (_req, res) => {
+  res.status(200).send('ok');
+});
 app.use('/', indexRouter);
 app.use('/page', pagesRouter);
 app.use('/api/page', apiRouter);

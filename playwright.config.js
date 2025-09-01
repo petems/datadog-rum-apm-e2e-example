@@ -1,5 +1,6 @@
 const { defineConfig, devices } = require('@playwright/test');
 const isCI = !!process.env.CI;
+const onlyChromium = isCI;
 
 module.exports = defineConfig({
   testDir: './test/e2e',
@@ -34,9 +35,8 @@ module.exports = defineConfig({
   },
 
   // Test projects for different browsers
-  projects: isCI
+  projects: onlyChromium
     ? [
-        // Restrict to Chromium in CI for stability and speed
         {
           name: 'chromium',
           use: { ...devices['Desktop Chrome'] },
