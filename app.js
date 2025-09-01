@@ -1,10 +1,14 @@
-// This line must come before importing any instrumented module.
-require('dd-trace').init({
-  enabled: true,
-  analytics: true,
-  logInjection: true,
-  // debug: true
-});
+// Initialize Datadog tracing only outside of tests
+if (process.env.NODE_ENV !== 'test') {
+  // This line must come before importing any instrumented module.
+  require('dd-trace').init({
+    // Allow tests/CI to disable via env; default enabled in non-test
+    enabled: process.env.DD_TRACE_ENABLED !== 'false',
+    analytics: true,
+    logInjection: true,
+    // debug: true
+  });
+}
 const rum = require('./config/rum');
 
 // Basic imports
@@ -12,7 +16,10 @@ const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
 const logger = require('./logger');
-require('./mongo');
+// Avoid establishing DB connections during unit tests to prevent open handles
+if (process.env.NODE_ENV !== 'test') {
+  require('./mongo');
+}
 const helmet = require('helmet');
 const crypto = require('crypto');
 
