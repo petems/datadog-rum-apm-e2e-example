@@ -16,20 +16,20 @@ const indexRateLimit = rateLimit({
 });
 
 /* GET home page. */
-router.get(['/', '/v1'], indexRateLimit, function (req, res) {
+router.get(['/', '/v1'], indexRateLimit, async function (req, res) {
   logger.info(`Request for index page: ${req.url}`);
 
-  pageModel
-    .find({}, null, { sort: { id: 'descending' } }, function (err, pages) {
-      logger.info(`Found pages: ${pages.length}`);
-      if (err) {
-        logger.error(`Error encountered${err}`);
-        throw err;
-      }
+  try {
+    const pages = await pageModel
+      .find({}, null, { sort: { id: 'descending' } })
+      .limit(25);
 
-      res.render('index', { title: 'Home Page', pages, rum });
-    })
-    .limit(25);
+    logger.info(`Found pages: ${pages.length}`);
+    res.render('index', { title: 'Home Page', pages, rum });
+  } catch (err) {
+    logger.error(`Error encountered${err}`);
+    throw err;
+  }
 });
 
 module.exports = router;
