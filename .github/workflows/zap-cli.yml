@@ -57,6 +57,8 @@ jobs:
           # Only create/update issues on pushes to main/master to avoid duplicates
           allow_issue_writing: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
           issue_title: 'ZAP Baseline Report'
+          # Use a unique, v4-safe artifact name (alnum, underscore, dot)
+          artifact_name: "zap_scan_${{ github.run_id }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           cmd_options: '-a'
 
