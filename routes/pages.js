@@ -3,9 +3,12 @@ const router = express.Router();
 const logger = require('../logger');
 const rum = require('../config/rum');
 
-//StatsD Setup
+// StatsD setup (disabled in test to avoid network flakiness)
 const StatsD = require('hot-shots');
-const dogstatsd = new StatsD();
+const dogstatsd =
+  process.env.NODE_ENV === 'test'
+    ? { increment: () => {} }
+    : new StatsD();
 
 /* GET individual page listing. */
 router.get('/:page_id', async (req, res) => {
@@ -23,7 +26,12 @@ router.get('/:page_id', async (req, res) => {
     return;
   }
 
-  dogstatsd.increment('page.views', [`page:${page_id}`]);
+  // Increment a view metric; safe no-op during tests
+  try {
+    dogstatsd.increment('page.views', [`page:${page_id}`]);
+  } catch {
+    // ignore StatsD errors to prevent route failures
+  }
 
   try {
     const response = await fetch(`http://localhost:3000/api/page/${page_id}`);
