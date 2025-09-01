@@ -3,20 +3,34 @@ const logger = require('../logger');
 const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
+const rateLimit = require('express-rate-limit');
 const managePages = require('../controllers/manage-pages');
+const authenticate = require('../middlewares/authenticate');
+
+// Reasonable content size limits to guard payloads
+const MAX_TITLE_LENGTH = 200;
+const MAX_CONTENT_LENGTH = 5000;
 
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
 
-// Payload limits for page creation
-const MAX_TITLE_LENGTH = 200;
-const MAX_CONTENT_LENGTH = 10000;
+// Apply rate limiting to API pages (100 requests per 15 minutes per IP)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+router.use(limiter);
 
 /* GET all pages listing. */
-router.get('/', async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
-    logger.info({ headers: req.headers }, 'API Requesting All Pages');
-    const result = await managePages.getAllPages();
+    logger.info(
+      { headers: req.headers },
+      `API Requesting Pages for user: ${req.user.email}`
+    );
+    const result = await managePages.getAllPages(req.user);
     res.status(200).json(result);
   } catch (error) {
     logger.error({ error: error.message }, 'Error getting all pages');
@@ -25,9 +39,12 @@ router.get('/', async (req, res) => {
 });
 
 /* POST new page listing. */
-router.post('/', async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
-    logger.info({ headers: req.headers }, 'API Posting New Page');
+    logger.info(
+      { headers: req.headers },
+      `API Posting New Page for user: ${req.user.email}`
+    );
 
     // Validate required fields
     if (!req.body.title || !req.body.content) {
@@ -46,10 +63,9 @@ router.post('/', async (req, res) => {
     const pageData = {
       title: req.body.title,
       body: req.body.content,
-      author: req.body.author,
     };
 
-    const result = await managePages.createPage(pageData);
+    const result = await managePages.createPage(pageData, req.user);
     logger.info('Finished creating page');
     return res.status(201).json(result);
   } catch (error) {

@@ -1,24 +1,49 @@
 const express = require('express');
 const router = express.Router();
-const rateLimit = require('express-rate-limit');
 const logger = require('../logger');
 const rum = require('../config/rum');
+const { verifyAccess } = require('../utils/jwt');
 
 // StatsD setup (disabled in test to avoid network flakiness)
 const StatsD = require('hot-shots');
 const dogstatsd =
   process.env.NODE_ENV === 'test' ? { increment: () => {} } : new StatsD();
 
-// Rate limiter: protect SSR page routes
-const pagesLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Web authentication middleware - redirects to login or shows error for unauthenticated users
+function webAuthenticate(req, res, next) {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+
+  if (!token) {
+    logger.warn('Unauthorized access attempt - no token provided');
+    return res.status(401).render('error', {
+      statusCode: 401,
+      message: 'Access denied. Please log in to view pages.',
+      rum,
+    });
+  }
+
+  try {
+    const payload = verifyAccess(token);
+    req.user = {
+      id: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      tokenVersion: payload.tokenVersion,
+    };
+    return next();
+  } catch {
+    logger.warn('Unauthorized access attempt - invalid token');
+    return res.status(401).render('error', {
+      statusCode: 401,
+      message: 'Access denied. Please log in to view pages.',
+      rum,
+    });
+  }
+}
 
 /* GET individual page listing. */
-router.get('/:page_id', pagesLimiter, async (req, res) => {
+router.get('/:page_id', webAuthenticate, async (req, res) => {
   const page_id = req.params.page_id;
   logger.info(`Requesting Paged URL: ${req.url}, ID: ${page_id}`);
 
@@ -81,14 +106,14 @@ router.get('/:page_id', pagesLimiter, async (req, res) => {
 });
 
 /* GET new page listing. */
-router.get('/', pagesLimiter, function (req, res) {
+router.get('/', webAuthenticate, function (req, res) {
   logger.info(`Requesting Blank URL: ${req.url}`);
   const curDate = new Date().toDateString();
   res.render('new-page', { currentDate: curDate, rum });
 });
 
 /* GET edit page */
-router.get('/:page_id/edit', pagesLimiter, async (req, res) => {
+router.get('/:page_id/edit', webAuthenticate, async (req, res) => {
   const page_id = req.params.page_id;
   logger.info(`Requesting Paged URL: ${req.url}, ID: ${page_id}`);
 

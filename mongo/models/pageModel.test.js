@@ -1,10 +1,12 @@
 const mongoose = require('mongoose');
 const PageModel = require('./pageModel');
 
+// Create a dummy ObjectId for testing author field
+const dummyAuthorId = new mongoose.Types.ObjectId();
+
 describe('PageModel', () => {
   beforeAll(async () => {
     const url = `mongodb://127.0.0.1/test_datablog`;
-    // Deprecated options removed in Mongoose 8 / MongoDB driver v4+
     await mongoose.connect(url);
   });
 
@@ -25,6 +27,7 @@ describe('PageModel', () => {
         hasAttachment: false,
         createdDate: new Date(),
         updatedDate: new Date(),
+        author: dummyAuthorId,
       };
 
       const page = new PageModel(pageData);
@@ -44,6 +47,7 @@ describe('PageModel', () => {
         id: 2,
         title: 'Minimal Page',
         body: 'Minimal content',
+        author: dummyAuthorId,
       });
 
       const savedPage = await page.save();
@@ -58,6 +62,7 @@ describe('PageModel', () => {
       const page = new PageModel({
         title: 'No ID Page',
         body: 'Content without ID',
+        author: dummyAuthorId,
       });
 
       const savedPage = await page.save();
@@ -72,6 +77,7 @@ describe('PageModel', () => {
         id: 100,
         title: 'Findable Page',
         body: 'Can be found by id',
+        author: dummyAuthorId,
       });
       await testPage.save();
 
@@ -87,6 +93,7 @@ describe('PageModel', () => {
         title: 'Original Title',
         body: 'Original Content',
         createdDate: new Date(),
+        author: dummyAuthorId,
       });
       await page.save();
 
@@ -110,6 +117,7 @@ describe('PageModel', () => {
         id: 300,
         title: 'To Be Deleted',
         body: 'This will be deleted',
+        author: dummyAuthorId,
       });
       await page.save();
 
@@ -124,11 +132,13 @@ describe('PageModel', () => {
         id: 401,
         title: 'Page One',
         body: 'Content One',
+        author: dummyAuthorId,
       });
       const page2 = new PageModel({
         id: 402,
         title: 'Page Two',
         body: 'Content Two',
+        author: dummyAuthorId,
       });
 
       await page1.save();
@@ -148,6 +158,7 @@ describe('PageModel', () => {
         title: 'Page with attachment',
         body: 'Has attachment',
         hasAttachment: true,
+        author: dummyAuthorId,
       });
 
       const pageWithoutAttachment = new PageModel({
@@ -155,6 +166,7 @@ describe('PageModel', () => {
         title: 'Page without attachment',
         body: 'No attachment',
         hasAttachment: false,
+        author: dummyAuthorId,
       });
 
       await pageWithAttachment.save();

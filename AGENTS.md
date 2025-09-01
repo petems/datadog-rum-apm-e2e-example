@@ -32,7 +32,7 @@
 - Frameworks: Jest (unit/integration) and Playwright (E2E).
 - Naming: `*.test.js` next to code or at repo root (e.g., `app.test.js`).
 - Before PRs: run `npm run test:coverage`; aim to maintain or increase coverage.
-- E2E rely on `playwright.config.js`; ensure app is running or use Playwright’s server config.
+- E2E rely on `playwright.config.js`; ensure app is running or use Playwright's server config.
 
 ## Branch Strategy & Naming
 
@@ -139,26 +139,6 @@ Checklist
 - [ ] Tests added/updated and passing (`npm run test:coverage`)
 - [ ] Lint/format clean (`npm run lint && npm run format:check`)
 - [ ] Screenshots updated (if UI)
-```
-
-Correct example (no escaped newlines):
-
-```
-This PR moves security-specific scans into a dedicated workflow.
-
-Changes
-- Add consolidated security-scans.yml (CodeQL, Gitleaks, nodejsscan, Hadolint, Trivy, Actionlint)
-- Remove security jobs from node-ci.yml; keep docker-build for e2e dependency
-- Remove old security workflows (codeql.yml, secret-scan.yml, njsscan.yml)
-
-Notes
-- Nikto and ZAP remain separate due to runtime stack requirements; can merge later if desired.
-- All YAML validated locally.
-
-Checklist
-- [x] Conventional Commit title
-- [x] Lint/format unaffected; CI intact
-- [x] Security scans upload SARIF to code scanning
 ```
 
 ## Security & Configuration Tips

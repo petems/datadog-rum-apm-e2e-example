@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../app');
 const logger = require('../logger');
+const { signAccess } = require('../utils/jwt');
 
 // Mock the logger to reduce noise in tests
 jest.mock('../logger', () => ({
@@ -13,10 +14,20 @@ jest.mock('../logger', () => ({
 global.fetch = jest.fn();
 
 describe('Pages Routes', () => {
+  let validToken;
+
   beforeEach(() => {
     jest.clearAllMocks();
     // Reset fetch mock for each test
     global.fetch.mockReset();
+
+    // Create a valid JWT token for authenticated tests
+    validToken = signAccess({
+      sub: '123',
+      email: 'test@example.com',
+      role: 'user',
+      tokenVersion: 1,
+    });
   });
 
   describe('GET /:page_id', () => {
@@ -33,14 +44,20 @@ describe('Pages Routes', () => {
         json: async () => [mockPage],
       });
 
-      const response = await request(app).get('/page/1').expect(200);
+      const response = await request(app)
+        .get('/page/1')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
 
       expect(response.text).toContain('Test Page');
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/api/page/1');
     });
 
     it('should return 400 for invalid page_id (non-numeric)', async () => {
-      const response = await request(app).get('/page/abc').expect(400);
+      const response = await request(app)
+        .get('/page/abc')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(400);
 
       expect(response.text).toContain('Invalid page ID');
       expect(logger.warn).toHaveBeenCalledWith(
@@ -52,6 +69,7 @@ describe('Pages Routes', () => {
     it('should return 400 for invalid page_id (with special characters)', async () => {
       const response = await request(app)
         .get('/page/1;drop%20table%20pages')
+        .set('Authorization', `Bearer ${validToken}`)
         .expect(400);
 
       expect(response.text).toContain('Invalid page ID');
@@ -63,7 +81,10 @@ describe('Pages Routes', () => {
         status: 404,
       });
 
-      const response = await request(app).get('/page/999').expect(404);
+      const response = await request(app)
+        .get('/page/999')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(404);
 
       expect(response.text).toContain('Page not found');
       expect(logger.warn).toHaveBeenCalledWith(
@@ -78,7 +99,10 @@ describe('Pages Routes', () => {
         status: 500,
       });
 
-      const response = await request(app).get('/page/1').expect(500);
+      const response = await request(app)
+        .get('/page/1')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(500);
 
       expect(response.text).toContain('Unexpected Error');
       expect(logger.error).toHaveBeenCalledWith('Unexpected output: 500');
@@ -87,7 +111,10 @@ describe('Pages Routes', () => {
     it('should render error when fetch throws an exception', async () => {
       fetch.mockRejectedValueOnce(new Error('Network error'));
 
-      const response = await request(app).get('/page/1').expect(500);
+      const response = await request(app)
+        .get('/page/1')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(500);
 
       expect(response.text).toContain('Internal Server Error');
       expect(logger.error).toHaveBeenCalledWith('Error: Network error');
@@ -106,7 +133,10 @@ describe('Pages Routes', () => {
         json: async () => [mockPage],
       });
 
-      const response = await request(app).get('/page/1').expect(200);
+      const response = await request(app)
+        .get('/page/1')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
 
       expect(response.text).toContain('Test Page');
     });
@@ -114,7 +144,10 @@ describe('Pages Routes', () => {
 
   describe('GET / (new page)', () => {
     it('should render new page form', async () => {
-      const response = await request(app).get('/page/').expect(200);
+      const response = await request(app)
+        .get('/page/')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
 
       expect(response.text).toContain('Create New Page');
       expect(logger.info).toHaveBeenCalledWith('Requesting Blank URL: /');
@@ -135,14 +168,20 @@ describe('Pages Routes', () => {
         json: async () => [mockPage],
       });
 
-      const response = await request(app).get('/page/1/edit').expect(200);
+      const response = await request(app)
+        .get('/page/1/edit')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(200);
 
       expect(response.text).toContain('Edit Page');
       expect(fetch).toHaveBeenCalledWith('http://localhost:3000/api/page/1');
     });
 
     it('should return 400 for invalid page_id in edit route', async () => {
-      const response = await request(app).get('/page/abc/edit').expect(400);
+      const response = await request(app)
+        .get('/page/abc/edit')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(400);
 
       expect(response.text).toContain('Invalid page ID');
       expect(logger.warn).toHaveBeenCalledWith(
@@ -157,7 +196,10 @@ describe('Pages Routes', () => {
         status: 404,
       });
 
-      const response = await request(app).get('/page/999/edit').expect(404);
+      const response = await request(app)
+        .get('/page/999/edit')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(404);
 
       expect(response.text).toContain('Page not found');
       expect(logger.warn).toHaveBeenCalledWith(
@@ -172,7 +214,10 @@ describe('Pages Routes', () => {
         status: 500,
       });
 
-      const response = await request(app).get('/page/1/edit').expect(500);
+      const response = await request(app)
+        .get('/page/1/edit')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(500);
 
       expect(response.text).toContain('Unexpected Error');
       expect(logger.error).toHaveBeenCalledWith('Unexpected output: 500');
@@ -181,10 +226,67 @@ describe('Pages Routes', () => {
     it('should render error when fetch throws an exception in edit route', async () => {
       fetch.mockRejectedValueOnce(new Error('Network error'));
 
-      const response = await request(app).get('/page/1/edit').expect(500);
+      const response = await request(app)
+        .get('/page/1/edit')
+        .set('Authorization', `Bearer ${validToken}`)
+        .expect(500);
 
       expect(response.text).toContain('Internal Server Error');
       expect(logger.error).toHaveBeenCalledWith('Error: Network error');
+    });
+  });
+
+  describe('Authentication Requirements', () => {
+    describe('GET /:page_id - Unauthenticated', () => {
+      it('should return 401 when no token is provided', async () => {
+        const response = await request(app).get('/page/1').expect(401);
+
+        expect(response.text).toContain(
+          'Access denied. Please log in to view pages.'
+        );
+      });
+
+      it('should return 401 when invalid token is provided', async () => {
+        const response = await request(app)
+          .get('/page/1')
+          .set('Authorization', 'Bearer invalid-token')
+          .expect(401);
+
+        expect(response.text).toContain(
+          'Access denied. Please log in to view pages.'
+        );
+      });
+    });
+
+    describe('GET / (new page) - Unauthenticated', () => {
+      it('should return 401 when no token is provided', async () => {
+        const response = await request(app).get('/page/').expect(401);
+
+        expect(response.text).toContain(
+          'Access denied. Please log in to view pages.'
+        );
+      });
+    });
+
+    describe('GET /:page_id/edit - Unauthenticated', () => {
+      it('should return 401 when no token is provided', async () => {
+        const response = await request(app).get('/page/1/edit').expect(401);
+
+        expect(response.text).toContain(
+          'Access denied. Please log in to view pages.'
+        );
+      });
+
+      it('should return 401 when invalid token is provided', async () => {
+        const response = await request(app)
+          .get('/page/1/edit')
+          .set('Authorization', 'Bearer invalid-token')
+          .expect(401);
+
+        expect(response.text).toContain(
+          'Access denied. Please log in to view pages.'
+        );
+      });
     });
   });
 });

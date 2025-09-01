@@ -10,6 +10,16 @@ jest.mock('dd-trace', () => ({
   trace: jest.fn((name, fn) => fn()),
   wrap: jest.fn((name, fn) => fn),
 }));
+jest.mock('../middlewares/authenticate', () => {
+  return (req, res, next) => {
+    req.user = {
+      id: 'testuser123',
+      email: 'test@example.com',
+      role: 'user',
+    };
+    next();
+  };
+});
 
 const app = express();
 app.use('/api/page', router);
@@ -31,10 +41,10 @@ describe('API Pages Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockPages);
-      expect(managePages.getAllPages).toHaveBeenCalled();
+      expect(managePages.getAllPages).toHaveBeenCalledWith(expect.any(Object));
       expect(logger.info).toHaveBeenCalledWith(
         { headers: expect.any(Object) },
-        'API Requesting All Pages'
+        'API Requesting Pages for user: test@example.com'
       );
     });
 
@@ -77,14 +87,16 @@ describe('API Pages Routes', () => {
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual(newPage);
-      expect(managePages.createPage).toHaveBeenCalledWith({
-        title: 'New Page',
-        body: 'New Content',
-        author: 'John Doe',
-      });
+      expect(managePages.createPage).toHaveBeenCalledWith(
+        {
+          title: 'New Page',
+          body: 'New Content',
+        },
+        expect.any(Object)
+      );
       expect(logger.info).toHaveBeenCalledWith(
         { headers: expect.any(Object) },
-        'API Posting New Page'
+        'API Posting New Page for user: test@example.com'
       );
       expect(logger.info).toHaveBeenCalledWith('Finished creating page');
     });
@@ -159,11 +171,13 @@ describe('API Pages Routes', () => {
         .set('Content-Type', 'application/x-www-form-urlencoded');
 
       expect(response.status).toBe(201);
-      expect(managePages.createPage).toHaveBeenCalledWith({
-        title: 'Form Page',
-        body: 'Form Content',
-        author: undefined,
-      });
+      expect(managePages.createPage).toHaveBeenCalledWith(
+        {
+          title: 'Form Page',
+          body: 'Form Content',
+        },
+        expect.any(Object)
+      );
     });
   });
 });
