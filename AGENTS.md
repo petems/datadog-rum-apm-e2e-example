@@ -53,7 +53,7 @@
   - Types: `feat`, `fix`, `chore`, `deps`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`,
     `revert`.
   - Subject: present tense, lower case, max 72 chars.
-  - Separation: add one real blank line between subject and body (do not use literal `\n`).
+  - Separation: add a blank line between the subject and the body.
   - Body: use `*` bullet points, max 5 bullets; each line ≤ 100 chars; focus on the why/what.
   - Footer (when applicable): plain lines like `BREAKING CHANGE: ...`, `Closes #123`, `Refs #456`
     after a blank line.
