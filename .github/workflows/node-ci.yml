@@ -136,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, docker]
     container:
-      image: mcr.microsoft.com/playwright:v1.40.0-jammy
+      image: mcr.microsoft.com/playwright:v1.55.0-jammy
       options: --ipc=host
     
     services:
