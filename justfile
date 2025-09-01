@@ -50,11 +50,17 @@ seed:
 
 # Create or update an admin user
 create-admin email password="":
-    node scripts/create-admin.js "{{email}}" "{{password}}"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ -n "{{password}}" ]]; then
+      node scripts/create-admin.js '{{email}}' '{{password}}'
+    else
+      node scripts/create-admin.js '{{email}}'
+    fi
 
 # Create admin user with default credentials (for development)
 create-admin-dev:
-    just create-admin "admin@datablog.dev" "Admin123!"
+    just create-admin 'admin@example.com' 'AdminPassword123'
 
 # Take screenshots and update README
 screenshots:
@@ -158,3 +164,48 @@ help:
     @echo "  down               - Stop all services"
     @echo "  status             - Show application status"
     @echo "  help               - Show this help message"
+    @echo "  auth-login         - Login via API (args: email password base_url)"
+    @echo "  test-auth          - Run auth route unit tests (mocked DB)"
+    @echo "  test-auth-mongo    - Run auth route tests against local Mongo"
+    @echo "  mongo-users        - List users in compose Mongo"
+    @echo "  create-admin-compose - Upsert admin directly in compose Mongo (bcrypt)"
+    @echo "  auth-login         - Login via API (args: email password base_url)"
+    @echo "  create-user        - Create/update non-admin user (args: email password)"
+
+# Login via API using CSRF + cookie jar
+# Usage:
+#   just auth-login 'admin@example.com' 'AdminPassword123'
+#   just auth-login 'user@example.com' 'Password1' 'http://localhost:3000'
+auth-login email='admin@example.com' password='AdminPassword123' base_url='http://localhost:3000':
+    node scripts/auth-login.js '{{email}}' '{{password}}' '{{base_url}}'
+
+# Run auth route tests (mocked DB)
+test-auth:
+    npm test -- -i routes/auth.test.js --coverage=false
+
+# Run auth route tests against local MongoDB at 127.0.0.1:27017
+# Ensure Mongo is running locally (docker or service)
+test-auth-mongo:
+    npm test -- -i routes/auth.mongo.test.js --coverage=false
+
+# List users via compose Mongo container
+mongo-users:
+    docker exec mongo mongosh --quiet --eval 'db.getSiblingDB("datablog").users.find({}, {email:1, role:1}).toArray()'
+
+# Upsert admin directly inside compose Mongo using mongosh (bcrypt hashed on host)
+create-admin-compose email='admin@example.com' password='AdminPassword123':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    HASH="$(node -e 'const bcrypt=require("bcryptjs");(async()=>{const s=await bcrypt.genSalt(12);const h=await bcrypt.hash(process.argv[1], s);console.log(h);})().catch(e=>{console.error(e);process.exit(1);})' '{{password}}')"
+    echo "🔒 Computed bcrypt hash"
+    docker exec mongo mongosh --quiet --eval "db.getSiblingDB('datablog').users.updateOne({email:'{{email}}'},{\$set:{email:'{{email}}', role:'admin', passwordHash:'${HASH}', tokenVersion:0}},{upsert:true}); printjson(db.getSiblingDB('datablog').users.find({email:'{{email}}'},{email:1,role:1}).toArray())"
+
+# Create or update a non-admin user
+create-user email password="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ -n "{{password}}" ]]; then
+      node scripts/create-user.js '{{email}}' '{{password}}'
+    else
+      node scripts/create-user.js '{{email}}'
+    fi

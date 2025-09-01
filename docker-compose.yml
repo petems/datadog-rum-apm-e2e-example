@@ -33,16 +33,28 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - mongo
-      - ddagent
+      mongo:
+        condition: service_healthy
+      ddagent:
+        condition: service_started
   mongo:
     container_name: mongo
-    image: mongo
+    image: mongo:7.0
     labels: 
        com.datadoghq.tags.env: development
        com.datadoghq.tags.service: datablog-mongo
-    # Uncomment for persistent data
-    #volumes:
-      #- ./data/db:/data/db
+    # Allow optional runtime tuning via MONGO_OPTS, e.g. "--nojournal --wiredTigerCacheSizeGB=0.25"
+    command: bash -lc "exec mongod --bind_ip_all ${MONGO_OPTS}"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ ping: 1 }).ok' || mongo --eval 'db.runCommand({ ping: 1 }).ok'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    # Persistent data to avoid filling container layer and immediate shutdowns
+    volumes:
+      - mongo-data:/data/db
     ports:
       - "27017:27017"
+volumes:
+  mongo-data:

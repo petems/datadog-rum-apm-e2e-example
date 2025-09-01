@@ -5,30 +5,34 @@ const rateLimit = require('express-rate-limit');
 
 const managePages = require('../controllers/manage-pages');
 const rum = require('../config/rum');
+const { verifyAccess } = require('../utils/jwt');
 
-// Optional authentication middleware - allows both authenticated and anonymous users
-const optionalAuthenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+// Optional auth via Authorization header or refresh cookie
+const optionalAuthenticate = (req, _res, next) => {
+  const authHeader = req.headers.authorization || '';
+  const bearer = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : null;
+  const token = bearer || null;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    // No auth header - continue as anonymous user
+  if (!token) {
+    // Try to infer user from a previously validated session (handled client-side)
     req.user = null;
     return next();
   }
 
-  // Try to authenticate but don't fail if token is invalid
   try {
-    const authenticate = require('../middlewares/authenticate');
-    return authenticate(req, res, err => {
-      if (err) {
-        req.user = null;
-      }
-      next();
-    });
+    const payload = verifyAccess(token);
+    req.user = {
+      id: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      tokenVersion: payload.tokenVersion,
+    };
   } catch {
     req.user = null;
-    return next();
   }
+  return next();
 };
 
 // Rate limiting for index page - prevent abuse of database queries
@@ -53,11 +57,9 @@ router.get(
     try {
       const pagesObject = {};
 
-      // Only fetch and show pages for authenticated users
+      // Authenticated users (including admins) see pages
       if (req.user) {
         const pages = await managePages.getAllPages(req.user);
-
-        // Convert to the format expected by the template
         pages.forEach((page, index) => {
           pagesObject[index] = {
             id: page.id,
@@ -66,19 +68,19 @@ router.get(
             createdDate: page.createdDate
               ? new Date(page.createdDate).toDateString()
               : 'No Date Provided',
-            author: page.author, // This will include author info for admins
+            author: page.author,
           };
         });
-
-        logger.info(`Found pages: ${pages.length} for user: ${req.user.email}`);
-      } else {
-        logger.info('Anonymous user - hiding pages');
+        logger.info(
+          `Found pages: ${pages.length} for user: ${req.user.email} (${req.user.role})`
+        );
       }
 
       res.render('index', {
         title: 'Home Page',
         pages: pagesObject,
         user: req.user,
+        isAdmin: req.user?.role === 'admin',
         rum,
       });
     } catch (error) {

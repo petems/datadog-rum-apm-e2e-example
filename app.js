@@ -22,6 +22,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 const helmet = require('helmet');
 const crypto = require('crypto');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
@@ -38,6 +39,21 @@ app.set('view engine', 'ejs');
 // Handlers for JSON and URL Encodings
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+// Attach a per-request ID for correlation and expose header
+app.use((req, res, next) => {
+  const headerId = req.headers['x-request-id'];
+  // Prefer RFC 4122 if available
+  const genId =
+    (typeof crypto.randomUUID === 'function' && crypto.randomUUID()) ||
+    crypto.randomBytes(16).toString('hex');
+  const requestId = (headerId && String(headerId)) || genId;
+  req.requestId = requestId;
+  res.locals.requestId = requestId;
+  res.setHeader('X-Request-Id', requestId);
+  next();
+});
 
 // Per-request CSP nonce for inline scripts in templates
 app.use((req, res, next) => {
@@ -57,7 +73,12 @@ app.use(
           (req, res) => `'nonce-${res.locals.cspNonce}'`,
           'https://www.datadoghq-browser-agent.com',
         ],
-        'style-src': ["'self'"],
+        // Allow inline styles for third-party SDKs like Datadog RUM
+        // We keep scripts nonce-based and disallow unsafe-inline for scripts
+        'style-src': ["'self'", "'unsafe-inline'"],
+        // Explicitly allow inline style elements and attributes (CSP3)
+        'style-src-elem': ["'self'", "'unsafe-inline'"],
+        'style-src-attr': ["'self'", "'unsafe-inline'"],
         'font-src': ["'self'"],
         'img-src': ["'self'", 'data:'],
         'connect-src': [
@@ -156,8 +177,8 @@ app.use(function (err, req, res, _next) {
   res.locals.message = err.message;
   res.locals.error = err;
 
-  //TODO: Why does the error handling cause posting a new page to fail
-  //Workaround for this getting thrown from mangage-pages.getNextPageId
+  // TODO: Why does the error handling cause posting a new page to fail
+  // Workaround for this getting thrown from manage-pages.getNextPageId
   if (
     err.name === 'NotFoundError' &&
     (req.path === '/page' || req.path === '/page/')
@@ -166,14 +187,32 @@ app.use(function (err, req, res, _next) {
     return;
   }
 
-  // Render the error page
+  // Determine status and log with stack trace
   const statusCode = err.status || 500;
+  const logPayload = {
+    err, // bunyan will include name/message/stack
+    statusCode,
+    method: req.method,
+    path: req.path,
+    url: req.originalUrl,
+    query: req.query,
+    requestId: req.requestId,
+    user: req.user
+      ? { id: req.user.id, email: req.user.email, role: req.user.role }
+      : null,
+  };
+  if (statusCode >= 500) {
+    logger.error(logPayload, 'Unhandled application error');
+  } else {
+    logger.warn(logPayload, 'Request error');
+  }
+
+  // Render the error page without exposing stack to users
   res.status(statusCode);
   const errorDetails = {
     statusCode,
     message: err.message,
   };
-
   res.render('error', { ...errorDetails, rum });
 });
 

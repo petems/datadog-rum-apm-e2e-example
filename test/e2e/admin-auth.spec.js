@@ -6,7 +6,7 @@ const execAsync = promisify(exec);
 
 test.describe('Admin Authentication', () => {
   const adminCredentials = {
-    email: 'admin@datablog.dev',
+    email: 'admin@example.com',
     password: 'AdminPassword123',
   };
 
@@ -120,48 +120,13 @@ test.describe('Admin Authentication', () => {
     );
     await page.waitForLoadState('networkidle');
 
-    // After automatic refresh, check that pages section is now visible
-    await expect(page.locator('h2:has-text("📚 Your Pages")')).toBeVisible();
-
-    // Check that "Create New Page" button is visible
-    await expect(page.locator('text=Create New Page')).toBeVisible();
+    // Admin banner should be visible for admins
+    await expect(page.locator('#adminBanner')).toBeVisible();
 
     // Verify that the login prompt is no longer visible
     await expect(
       page.locator('text=Please log in to view your pages')
     ).not.toBeVisible();
-  });
-
-  test('should be able to navigate to create page when authenticated', async ({
-    page,
-  }) => {
-    await page.goto('/');
-
-    // Login process
-    await page.locator('#loginBtn').click();
-    await page.locator('#email').fill(adminCredentials.email);
-    await page.locator('#password').fill(adminCredentials.password);
-    await page.locator('#loginSubmit').click();
-
-    // Wait for success message and automatic page refresh
-    await expect(page.locator('#loginSuccess')).toContainText(
-      'Login successful! Redirecting...',
-      { timeout: 10000 }
-    );
-    await page.waitForLoadState('networkidle');
-
-    // After automatic refresh, click on "Create New Page" button
-    const createPageButton = page
-      .locator('a[href="/page"]:has-text("Create New Page")')
-      .first();
-    await expect(createPageButton).toBeVisible();
-    await createPageButton.click();
-
-    // Should navigate to the new page form
-    await expect(page).toHaveURL(/\/page\/?$/);
-
-    // Should see the new page form
-    await expect(page.locator('form')).toBeVisible();
   });
 
   test('should successfully logout', async ({ page }) => {

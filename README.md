@@ -104,6 +104,11 @@ complexity of microservices architecture.
    # Start all services (app, MongoDB, Datadog Agent)
    docker-compose up -d
 
+   # If Mongo exits immediately, ensure disk space is available and
+   # a persistent volume is attached. This compose file mounts a
+   # named volume `mongo-data` to /data/db and waits for Mongo health
+   # before starting the app.
+
    # View logs (optional)
    docker-compose logs -f
    ```
@@ -169,12 +174,29 @@ complexity of microservices architecture.
    ```
 
 4. **Run Tests**
-   ```bash
-   npm test                    # Unit tests
-   npm run test:coverage      # Coverage report
-   npm run test:e2e          # End-to-end tests
-   npm run test:e2e:ui       # E2E tests with UI
-   ```
+  ```bash
+  npm test                    # Unit tests
+  npm run test:coverage      # Coverage report
+  npm run test:e2e          # End-to-end tests
+  npm run test:e2e:ui       # E2E tests with UI
+  ```
+
+Tip: Quick E2E iteration without docker-compose
+The Playwright config probes Mongo at 127.0.0.1:27017 and prints a hint if it’s not reachable.
+
+Start Mongo quickly with either:
+
+```bash
+docker run -d -p 27017:27017 --name mongo mongo:7.0
+# or
+docker compose up -d mongo
+```
+
+Override host/port via env when running tests:
+
+```bash
+MONGO_HOST=localhost MONGO_PORT=27018 npm run test:e2e
+```
 
 ## 🔧 Development Workflows
 

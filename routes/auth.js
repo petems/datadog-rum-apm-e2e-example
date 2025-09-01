@@ -1,4 +1,5 @@
 const express = require('express');
+const logger = require('../logger');
 const cookieParser = require('cookie-parser');
 let csurf;
 try {
@@ -43,7 +44,8 @@ router.use(
 );
 
 // CSRF protection for state-changing requests using cookie-based refresh token
-const csrfProtection = csurf({ cookie: true });
+// CSRF cookie should be sent for same-origin requests
+const csrfProtection = csurf({ cookie: { sameSite: 'lax', httpOnly: true, path: '/' } });
 router.use(csrfProtection);
 
 // Public endpoint for clients to fetch a CSRF token
@@ -98,9 +100,13 @@ router.post('/register', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', authLimiter, async (req, res) => {
+router.post('/login', authLimiter, csrfProtection, async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
+    logger && logger.warn(
+      { path: req.path, method: req.method, requestId: req.requestId },
+      'Login failed: missing email or password'
+    );
     return res.status(400).json({
       code: 'BAD_REQUEST',
       message: 'email and password are required',
@@ -118,6 +124,18 @@ router.post('/login', authLimiter, async (req, res) => {
       ok = await verifyPassword(password, dummyHash);
     }
     if (!user || !ok) {
+      const hashPrefix = user?.passwordHash?.slice(0, 4) || null;
+      logger && logger.warn(
+        {
+          path: req.path,
+          method: req.method,
+          requestId: req.requestId,
+          email,
+          userFound: Boolean(user),
+          hashPrefix,
+        },
+        'Login failed: invalid credentials'
+      );
       return res
         .status(401)
         .json({ code: 'INVALID_CREDENTIALS', message: 'Invalid credentials' });
@@ -134,6 +152,10 @@ router.post('/login', authLimiter, async (req, res) => {
       tokenVersion: user.tokenVersion,
     });
     setRefreshCookie(res, refresh);
+    logger && logger.info(
+      { path: req.path, method: req.method, requestId: req.requestId, userId: user._id.toString() },
+      'Login success'
+    );
     return res
       .status(200)
       .json({ accessToken: access, user: toPublicUser(user) });
@@ -145,7 +167,7 @@ router.post('/login', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/refresh
-router.post('/refresh', authLimiter, async (req, res) => {
+router.post('/refresh', authLimiter, csrfProtection, async (req, res) => {
   const token = req.cookies?.refresh_token;
   if (!token) {
     return res
@@ -206,7 +228,7 @@ router.post('/refresh', authLimiter, async (req, res) => {
 });
 
 // POST /api/auth/logout
-router.post('/logout', authLimiter, authenticate, async (req, res) => {
+router.post('/logout', authLimiter, csrfProtection, authenticate, async (req, res) => {
   try {
     await User.findByIdAndUpdate(
       { _id: { $eq: req.user.id } },

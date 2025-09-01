@@ -3,7 +3,13 @@
 /* eslint-disable no-console */
 const mongoose = require('mongoose');
 const User = require('../mongo/models/userModel');
-const { hashPassword } = require('../utils/password');
+// Use bcrypt for compatibility with production image where argon2 may be unavailable
+const bcrypt = require('bcryptjs');
+async function hashWithBcrypt(password) {
+  const saltRounds = 12;
+  const salt = await bcrypt.genSalt(saltRounds);
+  return bcrypt.hash(password, salt);
+}
 const mongoConfig = require('../config/mongo');
 
 async function createAdminUser(email, password) {
@@ -27,7 +33,7 @@ async function createAdminUser(email, password) {
       // Update password if provided
       if (password) {
         console.log('🔒 Updating password...');
-        const passwordHash = await hashPassword(password);
+        const passwordHash = await hashWithBcrypt(password);
         updateData.passwordHash = passwordHash;
       }
 
@@ -50,7 +56,7 @@ async function createAdminUser(email, password) {
       }
 
       // Hash password
-      const passwordHash = await hashPassword(password);
+      const passwordHash = await hashWithBcrypt(password);
 
       // Create new admin user
       const newUser = await User.create({

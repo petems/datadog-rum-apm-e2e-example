@@ -12,26 +12,30 @@ class AuthManager {
       this.validateToken();
     }
 
-    // Bind event listeners
-    document
-      .getElementById('loginForm')
-      .addEventListener('submit', e => this.handleLogin(e));
-    document
-      .getElementById('logoutBtn')
-      .addEventListener('click', e => this.handleLogout(e));
+    // Bind event listeners (guard against missing elements)
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+      loginForm.addEventListener('submit', e => this.handleLogin(e));
+    }
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', e => this.handleLogout(e));
+    }
 
     // Close modal on successful login
-    document
-      .getElementById('loginModal')
-      .addEventListener('hidden.bs.modal', () => {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+      loginModal.addEventListener('hidden.bs.modal', () => {
         this.clearForm();
       });
+    }
   }
 
   async validateToken() {
     try {
       const response = await fetch('/api/auth/me', {
         method: 'GET',
+        credentials: 'same-origin',
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
           'Content-Type': 'application/json',
@@ -41,6 +45,9 @@ class AuthManager {
       if (response.ok) {
         const data = await response.json();
         this.showLoggedInState(data.user);
+        if (data.user && data.user.role === 'admin') {
+          this.showAdminBanner();
+        }
       } else {
         // Token is invalid, remove it
         this.logout();
@@ -62,12 +69,13 @@ class AuthManager {
 
     try {
       // First get CSRF token
-      const csrfResponse = await fetch('/api/auth/csrf');
+      const csrfResponse = await fetch('/api/auth/csrf', { credentials: 'same-origin' });
       const csrfData = await csrfResponse.json();
 
       // Then login
       const response = await fetch('/api/auth/login', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
           'csrf-token': csrfData.csrfToken,
@@ -109,12 +117,13 @@ class AuthManager {
     try {
       if (this.accessToken) {
         // Get CSRF token for logout
-        const csrfResponse = await fetch('/api/auth/csrf');
+        const csrfResponse = await fetch('/api/auth/csrf', { credentials: 'same-origin' });
         const csrfData = await csrfResponse.json();
 
         // Call logout endpoint
         await fetch('/api/auth/logout', {
           method: 'POST',
+          credentials: 'same-origin',
           headers: {
             Authorization: `Bearer ${this.accessToken}`,
             'csrf-token': csrfData.csrfToken,
@@ -143,52 +152,80 @@ class AuthManager {
   }
 
   showLoggedInState(user) {
-    document.getElementById('loginBtn').classList.add('d-none');
-    document.getElementById('userMenu').classList.remove('d-none');
-    document.getElementById('userEmail').textContent = user.email;
+    const loginBtn = document.getElementById('loginBtn');
+    const userMenu = document.getElementById('userMenu');
+    const userEmail = document.getElementById('userEmail');
+    if (loginBtn) loginBtn.classList.add('d-none');
+    if (userMenu) userMenu.classList.remove('d-none');
+    if (userEmail) userEmail.textContent = user.email;
   }
 
   showLoggedOutState() {
-    document.getElementById('loginBtn').classList.remove('d-none');
-    document.getElementById('userMenu').classList.add('d-none');
-    document.getElementById('userEmail').textContent = '';
+    const loginBtn = document.getElementById('loginBtn');
+    const userMenu = document.getElementById('userMenu');
+    const userEmail = document.getElementById('userEmail');
+    if (loginBtn) loginBtn.classList.remove('d-none');
+    if (userMenu) userMenu.classList.add('d-none');
+    if (userEmail) userEmail.textContent = '';
   }
 
   showLoading(show) {
     const spinner = document.getElementById('loginSpinner');
     const submitBtn = document.getElementById('loginSubmit');
 
+    // Guard against missing elements to prevent runtime errors
+    if (!spinner || !submitBtn) return;
+
     if (show) {
       spinner.classList.remove('d-none');
       submitBtn.disabled = true;
-      submitBtn.textContent = ' Logging in...';
     } else {
       spinner.classList.add('d-none');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Login';
     }
   }
 
   showError(message) {
     const errorDiv = document.getElementById('loginError');
+    if (!errorDiv) return;
     errorDiv.textContent = message;
     errorDiv.classList.remove('d-none');
   }
 
   showSuccess(message) {
     const successDiv = document.getElementById('loginSuccess');
+    if (!successDiv) return;
     successDiv.textContent = message;
     successDiv.classList.remove('d-none');
   }
 
   hideMessages() {
-    document.getElementById('loginError').classList.add('d-none');
-    document.getElementById('loginSuccess').classList.add('d-none');
+    const err = document.getElementById('loginError');
+    const ok = document.getElementById('loginSuccess');
+    if (err) err.classList.add('d-none');
+    if (ok) ok.classList.add('d-none');
   }
 
   clearForm() {
-    document.getElementById('loginForm').reset();
+    const form = document.getElementById('loginForm');
+    if (form) form.reset();
     this.hideMessages();
+  }
+
+  showAdminBanner() {
+    if (document.getElementById('adminBanner')) return;
+    // Target the first container immediately following the nav (main header)
+    const container =
+      document.querySelector('nav + .container') ||
+      document.querySelectorAll('.container')[1] ||
+      document.querySelector('.container') ||
+      document.body;
+    const banner = document.createElement('div');
+    banner.id = 'adminBanner';
+    banner.className = 'alert alert-success d-flex align-items-center my-3';
+    banner.setAttribute('role', 'alert');
+    banner.innerHTML = '✅ <strong class="ms-2">Admin Mode:</strong> You can view all users\' pages.';
+    container.prepend(banner);
   }
 }
 

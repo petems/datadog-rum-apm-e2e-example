@@ -32,7 +32,6 @@
     ]
   },
   "dependencies": {
-    "argon2": "^0.40.3",
     "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.0",
     "bunyan": "^1.8.15",
