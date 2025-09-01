@@ -27,13 +27,13 @@ jobs:
               cp .env.example .env
             else
               printf "%s\n" \
-DD_SITE=datadoghq.com \
-DD_API_KEY=DUMMY \
-DD_CLIENT_TOKEN=dummy \
-DD_APPLICATION_ID=dummy \
-DD_SERVICE=datablog \
-DD_ENV=ci \
-DD_VERSION=2.0.0 > .env
+                DD_SITE=datadoghq.com \
+                DD_API_KEY=DUMMY \
+                DD_CLIENT_TOKEN=dummy \
+                DD_APPLICATION_ID=dummy \
+                DD_SERVICE=datablog \
+                DD_ENV=ci \
+                DD_VERSION=2.0.0 > .env
             fi
           fi
 
