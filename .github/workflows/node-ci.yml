@@ -158,11 +158,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Ensure .env exists for app
+        run: |
+          if [ ! -f .env ]; then
+            if [ -f .env.example ]; then cp .env.example .env; else echo "DD_SITE=datadoghq.com" > .env; fi
+          fi
 
+      
       - name: Start application
         run: |
           npm start &
-          sleep 10
+          for i in {1..60}; do
+            if curl -sf http://localhost:3000 >/dev/null; then echo "app up"; break; fi; sleep 2; done
         env:
           NODE_ENV: test
           MONGODB_URI: mongodb://mongodb:27017/datablog-e2e

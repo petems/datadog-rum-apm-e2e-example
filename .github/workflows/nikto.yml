@@ -17,6 +17,24 @@ jobs:
       - name: Set up Docker Compose
         uses: docker/setup-buildx-action@v3
 
+      - name: Prepare .env for docker-compose
+        run: |
+          if [ ! -f .env ]; then
+            if [ -f .env.example ]; then
+              cp .env.example .env
+            else
+              cat > .env <<'EOF'
+DD_SITE=datadoghq.com
+DD_API_KEY=DUMMY
+DD_CLIENT_TOKEN=dummy
+DD_APPLICATION_ID=dummy
+DD_SERVICE=datablog
+DD_ENV=ci
+DD_VERSION=2.0.0
+EOF
+            fi
+          fi
+
       - name: Start stack (app + mongo)
         run: |
           docker compose -f docker-compose.yml up -d --build app mongo
