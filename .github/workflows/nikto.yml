@@ -23,7 +23,7 @@ jobs:
             if [ -f .env.example ]; then
               cp .env.example .env
             else
-              cat > .env <<'EOF'
+              cat > .env <<EOF
 DD_SITE=datadoghq.com
 DD_API_KEY=DUMMY
 DD_CLIENT_TOKEN=dummy
