@@ -237,7 +237,9 @@ class AuthManager {
   }
 
   showAdminBanner() {
-    if (document.getElementById('adminBanner')) return;
+    if (document.getElementById('adminBanner')) {
+      return;
+    }
     // Target the first container immediately following the nav (main header)
     const container =
       document.querySelector('nav + .container') ||
