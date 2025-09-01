@@ -27,6 +27,8 @@ jobs:
         run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
       - name: Run ESLint (CI - no warnings)
         run: npm run lint:ci
@@ -203,11 +205,25 @@ jobs:
     name: End-to-End Tests
     runs-on: ubuntu-latest
     needs: [test, docker]
+    # Run tests inside Playwright container to avoid install-deps
+    # Image includes all required system dependencies and browsers
+    container:
+      image: mcr.microsoft.com/playwright:v1.40.0-jammy
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Setup Node.js
+      - name: Setup Node.js (22.x)
         uses: actions/setup-node@v4
         with:
           node-version: '22.18.0'
@@ -216,34 +232,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Cache Playwright browsers
-        id: cache-playwright
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
+      # Browsers and system dependencies already exist in the container image
 
-      - name: Install system dependencies for browsers
-        run: npx playwright install-deps
-      - name: Install Playwright browsers (if needed)
-        if: steps.cache-playwright.outputs.cache-hit != 'true'
-        run: npx playwright install
-
-      - name: Create minimal .env for Docker Compose
+      - name: Start application (background)
+        env:
+          PORT: '3000'
+          NODE_ENV: test
+          MONGODB_URI: mongodb://mongodb:27017/datablog-test
         run: |
-          cat > .env <<'EOF'
-          # Minimal placeholders for CI to satisfy docker-compose env_file
-          DD_SITE=datadoghq.com
-          DD_API_KEY=placeholder
-          DD_APPLICATION_ID=placeholder
-          DD_CLIENT_TOKEN=placeholder
-          EOF
-
-      - name: Start services with Docker Compose
-        run: |
-          docker compose -f docker-compose.yml up -d mongo app
+          node ./bin/www > app.log 2>&1 & echo $! > .e2e_app_pid
 
       - name: Wait for app to be ready
         run: |
@@ -252,20 +249,20 @@ jobs:
               echo "App is ready"; exit 0; fi;
             echo "Waiting for app... ($i)"; sleep 2;
           done
-          echo "App failed to start in time"; docker compose ps; docker compose logs app || true; exit 1
+          echo "App failed to start in time"; (test -f app.log && tail -n 200 app.log) || true; exit 1
 
       - name: Run Playwright tests
         run: npx playwright test
 
-      - name: Docker logs on failure
+      - name: App logs on failure
         if: failure()
         run: |
-          docker compose ps
-          docker compose logs app mongo || true
+          (test -f app.log && tail -n 200 app.log) || true
 
-      - name: Stop services
+      - name: Stop application
         if: always()
-        run: docker compose down -v
+        run: |
+          if [ -f .e2e_app_pid ]; then kill "$(cat .e2e_app_pid)" 2>/dev/null || true; fi
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
