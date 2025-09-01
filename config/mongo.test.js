@@ -12,6 +12,7 @@ describe('Mongo Configuration', () => {
 
   it('should use localhost URI by default', () => {
     delete process.env.DOCKER;
+    delete process.env.MONGODB_URI;
 
     const mongoConfig = require('./mongo');
 
@@ -25,6 +26,7 @@ describe('Mongo Configuration', () => {
 
   it('should use mongo service URI when DOCKER env is set', () => {
     process.env.DOCKER = 'true';
+    delete process.env.MONGODB_URI;
 
     const mongoConfig = require('./mongo');
 
@@ -51,5 +53,15 @@ describe('Mongo Configuration', () => {
     expect(mongoConfig).toHaveProperty('options');
     expect(typeof mongoConfig.uri).toBe('string');
     expect(typeof mongoConfig.options).toBe('object');
+  });
+
+  it('should honor explicit MONGODB_URI when set', () => {
+    process.env.MONGODB_URI = 'mongodb://some-host:27018/custom-db';
+    delete process.env.DOCKER;
+
+    jest.resetModules();
+    const mongoConfig = require('./mongo');
+
+    expect(mongoConfig.uri).toBe('mongodb://some-host:27018/custom-db');
   });
 });
