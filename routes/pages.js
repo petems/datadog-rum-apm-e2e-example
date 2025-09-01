@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
 const logger = require('../logger');
 const rum = require('../config/rum');
 
@@ -8,8 +9,16 @@ const StatsD = require('hot-shots');
 const dogstatsd =
   process.env.NODE_ENV === 'test' ? { increment: () => {} } : new StatsD();
 
+// Rate limiter: protect SSR page routes
+const pagesLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /* GET individual page listing. */
-router.get('/:page_id', async (req, res) => {
+router.get('/:page_id', pagesLimiter, async (req, res) => {
   const page_id = req.params.page_id;
   logger.info(`Requesting Paged URL: ${req.url}, ID: ${page_id}`);
 
@@ -72,14 +81,14 @@ router.get('/:page_id', async (req, res) => {
 });
 
 /* GET new page listing. */
-router.get('/', function (req, res) {
+router.get('/', pagesLimiter, function (req, res) {
   logger.info(`Requesting Blank URL: ${req.url}`);
   const curDate = new Date().toDateString();
   res.render('new-page', { currentDate: curDate, rum });
 });
 
 /* GET edit page */
-router.get('/:page_id/edit', async (req, res) => {
+router.get('/:page_id/edit', pagesLimiter, async (req, res) => {
   const page_id = req.params.page_id;
   logger.info(`Requesting Paged URL: ${req.url}, ID: ${page_id}`);
 
