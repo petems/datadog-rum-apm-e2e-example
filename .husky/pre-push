@@ -3,9 +3,22 @@
 # Lightweight pre-push to avoid blocking on audits locally
 set -e
 
-# Lint strictly (no warnings)
+# Skip entirely when requested
+if [ -n "$SKIP_HOOKS" ]; then
+  echo "[husky] pre-push skipped via SKIP_HOOKS=1"
+  exit 0
+fi
+
+# Use faster settings when HOOKS_FAST is set
+if [ -n "$HOOKS_FAST" ]; then
+  echo "[husky] Running fast pre-push checks (HOOKS_FAST=1)"
+  # Lint with cache
+  npx --no -- eslint . --max-warnings=0 --cache
+  # Run tests with a single worker, allow no tests case
+  npx --no -- jest -i --runInBand --passWithNoTests
+  exit 0
+fi
+
+# Default strict checks
 npm run lint:ci
-
-# Run unit tests fast
 npm test --silent
-
