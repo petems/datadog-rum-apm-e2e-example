@@ -52,9 +52,11 @@
 - Conventional Commits: use `type(scope)!: short summary`.
   - Types: `feat`, `fix`, `chore`, `deps`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`,
     `revert`.
-  - Summary: present tense, lower case, ≤ 72 chars.
-  - Body (optional): explain the what and why; wrap at 100 cols.
-  - Footer (when applicable): `BREAKING CHANGE: ...`, `Closes #123`, `Refs #456`.
+  - Subject: present tense, lower case, max 72 chars.
+  - Separation: add a blank line between the subject and the body.
+  - Body: use `*` bullet points, max 5 bullets; each line ≤ 100 chars; focus on the why/what.
+  - Footer (when applicable): plain lines like `BREAKING CHANGE: ...`, `Closes #123`, `Refs #456`
+    after a blank line.
 - Keep commits focused; one logical change per commit. Squash locally if needed to keep history
   clean.
 - Prefer squash-merge; use a Conventional Commit-style PR title so the squashed commit is
@@ -69,7 +71,11 @@
 ```
 feat(auth): add role-based access control
 
-Introduce RBAC middleware for route protection and UI checks.
+* add RBAC middleware for protected routes
+* enforce permissions in UI components
+* introduce basic roles: admin and user
+* update docs for auth behavior
+* add tests covering role checks
 
 Closes #123
 ```
@@ -77,7 +83,11 @@ Closes #123
 ```
 fix(session): handle null user in serializer
 
-Avoids crash when session cookie is present but user is deleted.
+* prevent crash when cookie exists but user was deleted
+* safely return anonymous session instead of throwing
+* add guard in serializer to handle null user
+* include regression test for null-user path
+* document behavior in session README
 
 Refs #456
 ```
@@ -85,7 +95,9 @@ Refs #456
 ```
 deps(dev): bump jest to 30.1.1
 
-Keeps in sync with esm transforms and ts-jest peer range.
+* align with esm transforms
+* match ts-jest peer dependency range
+* update lockfile and scripts
 ```
 
 ### Pull request titles and descriptions
