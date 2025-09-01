@@ -20,11 +20,18 @@ test.describe('Datablog Application', () => {
       .first();
 
     if (await createButton.isVisible()) {
-      await createButton.click();
-
-      // Should navigate to a form page
-      await expect(page.locator('form')).toBeVisible();
+      await Promise.all([
+        page.waitForURL('**/page', { timeout: 10000 }),
+        createButton.click(),
+      ]);
+    } else {
+      // Fallback: navigate directly if the link isn't visible on this viewport/engine
+      await page.goto('/page');
+      await page.waitForURL('**/page', { timeout: 10000 });
     }
+
+    // Should navigate to a form page
+    await expect(page.locator('form')).toBeVisible();
   });
 
   test('should handle API requests', async ({ page }) => {
