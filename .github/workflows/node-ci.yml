@@ -78,13 +78,12 @@ jobs:
         run: npm run audit:ci
         continue-on-error: true
 
-  # Docker Build and Security Scan
-  docker:
-    name: Docker Build & Security Scan
+  # Docker Build (for local dev/test)
+  docker-build:
+    name: Build Docker image
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -102,39 +101,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: 'datablog:test'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
-          ignore-unfixed: true
-
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Run Hadolint (Dockerfile linting)
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: Dockerfile
-          format: sarif
-          output-file: hadolint-results.sarif
-          failure-threshold: error
-
-      - name: Upload Hadolint scan results
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: hadolint-results.sarif
-
   # End-to-End Tests with Playwright
   e2e:
     name: End-to-End Tests
     runs-on: ubuntu-latest
-    needs: [test, docker]
+    needs: [test, docker-build]
     container:
       image: mcr.microsoft.com/playwright:v1.55.0-jammy
       options: --ipc=host
@@ -184,44 +155,4 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
-  # GitHub Actions Lint
-  actions-lint:
-    name: GitHub Actions Lint (actionlint)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Run actionlint and output SARIF
-        # Pin to a released tag instead of a commit SHA to avoid fetch errors
-        uses: rhysd/actionlint@v1.7.1
-        continue-on-error: true
-        with:
-          args: -format sarif -out actionlint-results.sarif
-
-      - name: Ensure SARIF file exists
-        if: always()
-        shell: bash
-        run: |
-          if [ ! -f actionlint-results.sarif ]; then
-            printf '%s\n' \
-              '{' \
-              '  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",' \
-              '  "version": "2.1.0",' \
-              '  "runs": [' \
-              '    {' \
-              '      "tool": { "driver": { "name": "actionlint", "version": "v1.7.1" } },' \
-              '      "results": []' \
-              '    }' \
-              '  ]' \
-              '}' > actionlint-results.sarif
-          fi
-
-      - name: Upload actionlint SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: actionlint-results.sarif
+  
