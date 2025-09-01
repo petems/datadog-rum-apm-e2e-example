@@ -74,7 +74,7 @@ complexity of microservices architecture.
 - Datadog API Key
 - Datadog RUM Application credentials
 
-### Getting Started
+### Docker Compose Deployment
 
 1. **Clone and Setup**
 
@@ -86,23 +86,64 @@ complexity of microservices architecture.
 
 2. **Configure Environment**
 
+   Edit `.env` with your Datadog credentials:
+
    ```bash
-   # Edit .env with your Datadog credentials
    DD_API_KEY=your_api_key_here
    DD_RUM_APPLICATION_ID=your_rum_app_id
    DD_RUM_CLIENT_TOKEN=your_rum_client_token
+   DD_SITE=datadoghq.com  # Or your Datadog site
    ```
 
-3. **Deploy**
+3. **Build and Start Services**
 
    ```bash
+   # Build the application image
+   docker-compose build
+
+   # Start all services (app, MongoDB, Datadog Agent)
    docker-compose up -d
+
+   # View logs (optional)
+   docker-compose logs -f
    ```
 
-4. **Access Application**
+4. **Verify Services**
+
+   ```bash
+   # Check all containers are running
+   docker-compose ps
+
+   # Should show 3 services: app, mongo, datadog-agent
+   ```
+
+5. **Create Your First User**
+
+   Once the services are running, create your first user account:
+
+   ```bash
+   # Get CSRF token
+   CSRF_TOKEN=$(curl -s http://localhost:3000/api/auth/csrf | jq -r .csrfToken)
+
+   # Register first user
+   curl -X POST http://localhost:3000/api/auth/register \
+     -H 'Content-Type: application/json' \
+     -H "csrf-token: $CSRF_TOKEN" \
+     -d '{"email":"admin@example.com","password":"Admin123"}'
+   ```
+
+   Or register via the web interface at http://localhost:3000
+
+6. **Access Application**
    - Frontend: http://localhost:3000
    - MongoDB: localhost:27017
    - Datadog Agent: localhost:8126 (APM), localhost:8125 (StatsD)
+
+7. **Stop Services**
+
+   ```bash
+   docker-compose down
+   ```
 
 ### Local Development
 
@@ -152,6 +193,61 @@ npm run format:check      # Check formatting
 - **Integration Tests**: API testing with supertest
 - **E2E Tests**: Playwright for full user journey testing
 - **Visual Regression**: Automated screenshot comparison
+
+### Auth & CSRF
+
+- The auth API lives under `/api/auth` with CSRF protection enabled.
+- Obtain a CSRF token first, then include it in the `csrf-token` header for state-changing requests.
+
+Example flow with curl (replace placeholders):
+
+1. Fetch CSRF token
+
+```
+curl -i http://localhost:3000/api/auth/csrf
+```
+
+2. Register
+
+```
+curl -i -X POST http://localhost:3000/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -H 'csrf-token: <csrfToken>' \
+  --data '{"email":"me@example.com","password":"Password1"}'
+```
+
+3. Login (stores refresh cookie and returns access token)
+
+```
+curl -i -X POST http://localhost:3000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -H 'csrf-token: <csrfToken>' \
+  --data '{"email":"me@example.com","password":"Password1"}'
+```
+
+4. Refresh access token (requires refresh_token cookie)
+
+```
+curl -i -X POST http://localhost:3000/api/auth/refresh \
+  -H 'csrf-token: <csrfToken>' \
+  --cookie 'refresh_token=<value>'
+```
+
+5. Get current user
+
+```
+curl -i http://localhost:3000/api/auth/me \
+  -H 'Authorization: Bearer <accessToken>'
+```
+
+6. Logout (invalidates refresh via tokenVersion bump)
+
+```
+curl -i -X POST http://localhost:3000/api/auth/logout \
+  -H 'Authorization: Bearer <accessToken>' \
+  -H 'csrf-token: <csrfToken>' \
+  --cookie 'refresh_token=<value>'
+```
 
 ### Monitoring Development
 

@@ -48,6 +48,14 @@ format-check:
 seed:
     npm run seed
 
+# Create or update an admin user
+create-admin email password="":
+    node scripts/create-admin.js "{{email}}" "{{password}}"
+
+# Create admin user with default credentials (for development)
+create-admin-dev:
+    just create-admin "admin@datablog.dev" "Admin123!"
+
 # Take screenshots and update README
 screenshots:
     #!/usr/bin/env bash
@@ -134,17 +142,19 @@ status:
 # Help task
 help:
     @echo "Available tasks:"
-    @echo "  start          - Start the development server"
-    @echo "  test           - Run all tests"
-    @echo "  test-coverage  - Run tests with coverage"
-    @echo "  test-e2e       - Run end-to-end tests"
-    @echo "  lint           - Lint code"
-    @echo "  lint-fix       - Fix linting issues"
-    @echo "  format         - Format code"
-    @echo "  seed           - Seed database with sample data"
-    @echo "  screenshot     - Take screenshots and update README"
-    @echo "  setup          - Full development setup"
-    @echo "  up             - Start all services with Docker Compose"
-    @echo "  down           - Stop all services"
-    @echo "  status         - Show application status"
-    @echo "  help           - Show this help message"
+    @echo "  start              - Start the development server"
+    @echo "  test               - Run all tests"
+    @echo "  test-coverage      - Run tests with coverage"
+    @echo "  test-e2e           - Run end-to-end tests"
+    @echo "  lint               - Lint code"
+    @echo "  lint-fix           - Fix linting issues"
+    @echo "  format             - Format code"
+    @echo "  seed               - Seed database with sample data"
+    @echo "  create-admin       - Create/update admin user (args: email password)"
+    @echo "  create-admin-dev   - Create/update admin user with dev credentials"
+    @echo "  screenshot         - Take screenshots and update README"
+    @echo "  setup              - Full development setup"
+    @echo "  up                 - Start all services with Docker Compose"
+    @echo "  down               - Stop all services"
+    @echo "  status             - Show application status"
+    @echo "  help               - Show this help message"

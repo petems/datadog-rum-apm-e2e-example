@@ -2,32 +2,41 @@ const logger = require('../logger');
 const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
+const rateLimit = require('express-rate-limit');
 const managePages = require('../controllers/manage-pages');
 const escape = require('escape-html');
+const authenticate = require('../middlewares/authenticate');
 
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
 
-// Validate page_id once for all routes using Express param middleware
-router.param('page_id', (req, res, next, id) => {
-  if (!/^\d+$/.test(id)) {
-    res.status(400).send('Invalid page id');
-    return;
-  }
-  next();
+// Rate limiter: max 100 requests per 15 min per IP
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 /* GET individual page listing. */
-router.get('/:page_id', async (req, res) => {
+router.get('/:page_id', authenticate, apiLimiter, async (req, res) => {
   const page_id = req.params.page_id;
-  logger.info({ headers: req.headers }, `API Requesting Page: ${page_id}`);
+  logger.info(
+    { headers: req.headers },
+    `API Requesting Page: ${page_id} for user: ${req.user.email}`
+  );
 
-  const result = await managePages.getPageById(Number(page_id));
+  try {
+    const result = await managePages.getPageById(page_id, req.user);
 
-  if (result.length === 0) {
-    res.status(404).send('Page not found');
-  } else {
-    res.status(200).send(result);
+    if (result.length === 0) {
+      res.status(404).json({ error: 'Page not found or access denied' });
+    } else {
+      res.status(200).json(result);
+    }
+  } catch (error) {
+    logger.error({ error: error.message }, 'Error getting page');
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -39,45 +48,73 @@ router.get('/', (req, res) => {
 });
 
 /* POST new page listing. */
-router.post('/', async (req, res) => {
-  logger.info({ headers: req.headers }, 'API Posting New Page');
+router.post('/', authenticate, apiLimiter, async (req, res) => {
+  logger.info(
+    { headers: req.headers },
+    `API Posting New Page for user: ${req.user.email}`
+  );
 
-  const result = await managePages.createPage(req.body);
-  logger.info('Finished creating page');
-  res.status(200).send(result);
+  try {
+    const result = await managePages.createPage(req.body, req.user);
+    logger.info('Finished creating page');
+    res.status(201).json(result);
+  } catch (error) {
+    logger.error({ error: error.message }, 'Error creating page');
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 /* PUT update individual page. */
-router.put('/:page_id', async (req, res) => {
+router.put('/:page_id', authenticate, apiLimiter, async (req, res) => {
   const page_id = req.params.page_id;
-  logger.info({ headers: req.headers }, `API Updating Page: ${page_id}`);
+  logger.info(
+    { headers: req.headers },
+    `API Updating Page: ${page_id} for user: ${req.user.email}`
+  );
 
-  const pageToEdit = await managePages.getPageById(Number(page_id));
+  try {
+    const pageToEdit = await managePages.getPageById(page_id, req.user);
 
-  if (pageToEdit.length === 0) {
-    res.status(404).send('Page not found');
-  } else if (pageToEdit.length > 1) {
-    res
-      .status(400)
-      .send(`Bad Request, multiple pages with id: ${escape(page_id)} found`);
+    if (pageToEdit.length === 0) {
+      res.status(404).json({ error: 'Page not found or access denied' });
+      return;
+    } else if (pageToEdit.length > 1) {
+      res.status(400).json({
+        error: `Bad Request, multiple pages with id: ${escape(page_id)} found`,
+      });
+      return;
+    }
+
+    const result = await managePages.updatePage(
+      pageToEdit[0],
+      req.body,
+      req.user
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    logger.error({ error: error.message }, 'Error updating page');
+    res.status(500).json({ error: error.message });
   }
-
-  const result = await managePages.updatePage(pageToEdit[0], req.body);
-
-  res.status(200).send(result);
 });
 
-/* DELTE individual page */
-router.delete('/:page_id', async (req, res) => {
+/* DELETE individual page */
+router.delete('/:page_id', authenticate, apiLimiter, async (req, res) => {
   const page_id = req.params.page_id;
-  logger.info({ headers: req.headers }, `API Deleting Page: ${page_id}`);
+  logger.info(
+    { headers: req.headers },
+    `API Deleting Page: ${page_id} for user: ${req.user.email}`
+  );
 
-  const result = await managePages.deletePageById(Number(page_id));
-
-  if (result) {
-    res.status(200).send('Deleted');
-  } else {
-    res.status(500).send('Delete failed');
+  try {
+    const result = await managePages.deletePageById(page_id, req.user);
+    if (result) {
+      res.status(200).json({ message: 'Page deleted successfully' });
+    } else {
+      res.status(500).json({ error: 'Delete failed' });
+    }
+  } catch (error) {
+    logger.error({ error: error.message }, 'Error deleting page');
+    res.status(500).json({ error: error.message });
   }
 });
 

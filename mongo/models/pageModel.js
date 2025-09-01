@@ -8,6 +8,11 @@ const pageSchema = new Schema({
   hasAttachment: Boolean,
   createdDate: Date,
   updatedDate: Date,
+  author: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
 });
 
 const page = mongoose.model('page', pageSchema);

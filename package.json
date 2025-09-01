@@ -32,9 +32,13 @@
     ]
   },
   "dependencies": {
-    "zod": "^3.23.8",
+    "argon2": "^0.40.3",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.0",
     "bunyan": "^1.8.15",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "csurf": "^1.2.2",
     "dd-trace": "^5.28.0",
     "debug": "~4.4.1",
     "ejs": "^3.1.10",
@@ -44,6 +48,7 @@
     "helmet": "^7.2.0",
     "hot-shots": "^11.2.0",
     "http-errors": "~2.0.0",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.0"
   },
   "devDependencies": {

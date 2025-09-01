@@ -1,5 +1,4 @@
 const { verifyAccess } = require('../utils/jwt');
-const logger = require('../logger');
 
 function authenticate(req, res, next) {
   const auth = req.headers.authorization || '';
@@ -18,9 +17,7 @@ function authenticate(req, res, next) {
       tokenVersion: payload.tokenVersion,
     };
     return next();
-  } catch (error) {
-    // Log to aid debugging invalid tokens in non-prod too
-    logger.warn({ err: error }, 'Authentication failed');
+  } catch {
     return res
       .status(401)
       .json({ code: 'UNAUTHORIZED', message: 'Invalid or expired token' });
