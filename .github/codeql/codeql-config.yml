@@ -1,0 +1,24 @@
+name: repo-codeql-config
+version: 2
+
+packs:
+  - codeql/javascript-queries
+  - codeql/actions-queries
+
+paths:
+  - controllers
+  - routes
+  - utils
+  - middlewares
+  - mongo
+  - scripts
+  - .github/workflows
+
+paths-ignore:
+  - node_modules
+  - public
+  - docs
+  - test
+  - test/**
+  - playwright-report
+  - coverage
