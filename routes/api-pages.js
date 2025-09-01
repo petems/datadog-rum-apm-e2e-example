@@ -30,6 +30,11 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Title and content are required' });
     }
 
+    // Basic length limits to avoid overly large payloads
+    if (req.body.title.length > 200 || req.body.content.length > 10000) {
+      return res.status(413).json({ error: 'Payload too large' });
+    }
+
     // Map content to body for consistency with existing controller
     const pageData = {
       title: req.body.title,
