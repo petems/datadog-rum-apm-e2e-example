@@ -17,8 +17,18 @@ module.exports = {
           }
           const lines = body.split(/\r?\n/);
           const nonEmpty = lines.filter(l => l.trim() !== '');
-          const starLines = nonEmpty.filter(l => /^\*\s/.test(l));
-          const allAreStar = starLines.length === nonEmpty.length;
+          const { starLines, otherLines } = nonEmpty.reduce(
+            (acc, line) => {
+              if (/^\*\s/.test(line)) {
+                acc.starLines.push(line);
+              } else {
+                acc.otherLines.push(line);
+              }
+              return acc;
+            },
+            { starLines: [], otherLines: [] }
+          );
+          const allAreStar = otherLines.length === 0;
           const limitOk = starLines.length <= value;
           const pass =
             when === 'always'
@@ -26,8 +36,7 @@ module.exports = {
               : !(allAreStar && limitOk);
           let msg = '';
           if (!allAreStar) {
-            const bad = nonEmpty
-              .filter(l => !/^\*\s/.test(l))
+            const bad = otherLines
               .slice(0, 3)
               .map(l => `"${l.slice(0, 40)}"`)
               .join(', ');
