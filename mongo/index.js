@@ -23,7 +23,7 @@ connectWithRetry();
 // Log disconnections/errors and attempt re-connects
 mongoose.connection.on('disconnected', () => {
   logger.error('Mongo disconnected - attempting to reconnect');
-  connectWithRetry();
+  // Let Mongoose reconnect on its own; if it fails we'll schedule a retry
 });
 
 mongoose.connection.on('error', err => {

@@ -14,7 +14,7 @@ using **Express + MongoDB (Mongoose) + JWT** in **JavaScript ESM** (no TypeScrip
 
 - Routes:
   - `POST /api/auth/register` — Zod-validate body; enforce `{password_policy}`; hash with
-    **argon2id** (fallback **bcryptjs** ≥ 12 rounds); store `{ email, passwordHash, role:"user" }`.
+    **bcryptjs** (12 rounds); store `{ email, passwordHash, role:"user" }`.
   - `POST /api/auth/login` — verify credentials; issue **access token** (Authorization Bearer) and
     **refresh token** (HttpOnly cookie).
   - `POST /api/auth/refresh` — **rotate** refresh token on every call; **detect and handle reuse**;
