@@ -21,7 +21,14 @@ router.get(['/', '/v1'], indexRateLimit, async function (req, res) {
   logger.info(`Request for index page: ${req.url}`);
   // If DB not connected yet, render empty state instead of erroring
   if (mongoose.connection.readyState !== 1) {
-    return res.render('index', { title: 'Home Page', pages: [], rum });
+    res.render('index', { title: 'Home Page', pages: [], rum }, function (err, html) {
+      if (err) {
+        logger.error(`Render error (cold start): ${err.message}`);
+        return res.status(200).send('OK');
+      }
+      return res.status(200).send(html);
+    });
+    return;
   }
 
   try {
@@ -29,11 +36,23 @@ router.get(['/', '/v1'], indexRateLimit, async function (req, res) {
       .find({}, null, { sort: { id: 'descending' } })
       .limit(25);
     logger.info(`Found pages: ${pages.length}`);
-    return res.render('index', { title: 'Home Page', pages, rum });
+    return res.render('index', { title: 'Home Page', pages, rum }, function (rErr, html) {
+      if (rErr) {
+        logger.error(`Render error: ${rErr.message}`);
+        return res.status(200).send('OK');
+      }
+      return res.status(200).send(html);
+    });
   } catch (err) {
     // Be resilient during startup or transient DB errors
-    logger.error(`Error encountered ${err}`);
-    return res.render('index', { title: 'Home Page', pages: [], rum });
+    logger.error(`DB error on index: ${err.message || err}`);
+    return res.render('index', { title: 'Home Page', pages: [], rum }, function (rErr, html) {
+      if (rErr) {
+        logger.error(`Render error (DB fail): ${rErr.message}`);
+        return res.status(200).send('OK');
+      }
+      return res.status(200).send(html);
+    });
   }
 });
 
