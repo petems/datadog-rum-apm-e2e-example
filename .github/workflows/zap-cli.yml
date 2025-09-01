@@ -6,11 +6,16 @@ on:
   pull_request:
     branches: [ master, main ]
 
+concurrency:
+  group: zap-baseline-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   zap:
     name: OWASP ZAP Baseline
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: read
       issues: write
       security-events: write
@@ -45,14 +50,30 @@ jobs:
             if curl -sf http://localhost:3000 >/dev/null; then echo "app up"; break; fi; sleep 2; done
 
       - name: ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
+        uses: zaproxy/action-baseline@v0.14.0
         with:
           target: 'http://localhost:3000'
           rules_file_name: '.zap/rules.tsv'
-          # Allow creating/updating issues for pushes and same-repo PRs only
-          allow_issue_writing: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+          # Only create/update issues on pushes to main/master to avoid duplicates
+          allow_issue_writing: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+          issue_title: 'ZAP Baseline Report'
+          # Use a unique, v4-safe artifact name (alnum, underscore, dot)
+          artifact_name: "zap_scan_${{ github.run_id }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           cmd_options: '-a'
+
+      - name: Upload ZAP artifacts (fallback)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap_scan_${{ github.run_id }}_fallback
+          if-no-files-found: ignore
+          path: |
+            **/zap*.zip
+            **/zap*.html
+            **/zap*.md
+            **/zap*.xml
+            **/zap*.json
 
       - name: Stop stack
         if: always()
