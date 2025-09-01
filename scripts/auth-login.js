@@ -21,7 +21,7 @@ async function getJson(res) {
 
 function extractCookie(setCookies, name) {
   for (const c of setCookies) {
-    const idx = c.indexOf(name + '=');
+    const idx = c.indexOf(`${name}=`);
     if (idx !== -1) {
       const rest = c.slice(idx + name.length + 1);
       const val = rest.split(';')[0];
@@ -48,7 +48,9 @@ async function main() {
 
   const rawSetCookie = csrfRes.headers.getSetCookie
     ? csrfRes.headers.getSetCookie()
-    : (csrfRes.headers.get('set-cookie') ? [csrfRes.headers.get('set-cookie')] : []);
+    : csrfRes.headers.get('set-cookie')
+      ? [csrfRes.headers.get('set-cookie')]
+      : [];
   const setCookies = rawSetCookie;
   const csrfCookie = extractCookie(setCookies, '_csrf');
   if (!csrfCookie) {
@@ -68,7 +70,10 @@ async function main() {
   });
   const loginBody = await getJson(loginRes);
   if (!loginRes.ok) {
-    console.error('❌ Login failed', { status: loginRes.status, body: loginBody });
+    console.error('❌ Login failed', {
+      status: loginRes.status,
+      body: loginBody,
+    });
     process.exit(1);
   }
 

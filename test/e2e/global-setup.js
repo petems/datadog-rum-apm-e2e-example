@@ -9,7 +9,9 @@ async function checkMongo(host, port, timeoutMs = 2000) {
     const socket = new net.Socket();
     let done = false;
     const onDone = ok => {
-      if (done) return;
+      if (done) {
+        return;
+      }
       done = true;
       socket.destroy();
       resolve(ok);

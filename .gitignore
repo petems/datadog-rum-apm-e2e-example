@@ -141,3 +141,7 @@ vite.config.ts.timestamp-*
 
 # Screenshots (generated automatically)
 docs/screenshots/*.png
+
+# Local temp artifacts
+cookies.txt
+prompts/cookies.txt

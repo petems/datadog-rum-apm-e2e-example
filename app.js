@@ -207,13 +207,17 @@ app.use(function (err, req, res, _next) {
     logger.warn(logPayload, 'Request error');
   }
 
+  // In tests, avoid rendering EJS and return JSON for simplicity
+  if (process.env.NODE_ENV === 'test') {
+    res.status(statusCode).json({ statusCode, message: err.message });
+    return;
+  }
+
   // Render the error page without exposing stack to users
   res.status(statusCode);
-  const errorDetails = {
-    statusCode,
-    message: err.message,
-  };
+  const errorDetails = { statusCode, message: err.message };
   res.render('error', { ...errorDetails, rum });
+  return;
 });
 
 module.exports = app;

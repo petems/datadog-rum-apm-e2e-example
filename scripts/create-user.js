@@ -31,7 +31,9 @@ async function createOrUpdateUser(email, password) {
       const updated = await User.findById(existing._id);
       console.log('✅ User updated successfully');
       console.log(`User details: ${updated.email} (${updated.role})`);
-      if (password) console.log('✅ Password updated successfully');
+      if (password) {
+        console.log('✅ Password updated successfully');
+      }
     } else {
       if (!password) {
         throw new Error('Password is required for new users');
@@ -59,14 +61,18 @@ if (args.length < 1) {
   console.log('Usage: node scripts/create-user.js <email> [password]');
   console.log('Examples:');
   console.log('  node scripts/create-user.js user@example.com Password1');
-  console.log('  node scripts/create-user.js existing@user.com  # Update role to user (keeps password)');
+  console.log(
+    '  node scripts/create-user.js existing@user.com  # Update role to user (keeps password)'
+  );
   process.exit(1);
 }
 
 const email = args[0];
 const password = args[1];
 if (!password) {
-  console.log('ℹ️  No password provided - only role will be updated if user exists');
+  console.log(
+    'ℹ️  No password provided - only role will be updated if user exists'
+  );
 }
 
 createOrUpdateUser(email, password);
