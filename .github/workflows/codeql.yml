@@ -26,8 +26,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Analyze JS/TS code and GitHub Actions workflows
-        language: [ 'javascript-typescript', 'github-actions' ]
+        # Analyze JS/TS code and GitHub Actions workflows (language id: 'actions')
+        language: [ 'javascript-typescript', 'actions' ]
 
     steps:
     - name: Checkout repository
@@ -40,9 +40,9 @@ jobs:
         queries: +security-extended,security-and-quality
         config-file: ./.github/codeql/codeql-config.yml
 
-    # Autobuild is not needed for github-actions analysis
+    # Autobuild is not needed for Actions analysis
     - name: Autobuild
-      if: matrix.language != 'github-actions'
+      if: matrix.language != 'actions'
       uses: github/codeql-action/autobuild@v3
 
     - name: Perform CodeQL Analysis
