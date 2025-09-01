@@ -70,4 +70,3 @@ if (!password) {
 }
 
 createOrUpdateUser(email, password);
-

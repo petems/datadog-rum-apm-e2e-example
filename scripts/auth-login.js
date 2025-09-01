@@ -48,9 +48,7 @@ async function main() {
 
   const setCookies = csrfRes.headers.getSetCookie
     ? csrfRes.headers.getSetCookie()
-    : csrfRes.headers.get('set-cookie')
-    ? [csrfRes.headers.get('set-cookie')]
-    : [];
+    : (csrfRes.headers.get('set-cookie') ? [csrfRes.headers.get('set-cookie')] : []);
   const csrfCookie = extractCookie(setCookies, '_csrf');
   if (!csrfCookie) {
     console.error('❌ No _csrf cookie set by server');
@@ -97,4 +95,3 @@ main().catch(err => {
   console.error('❌ Unexpected error:', err?.message || err);
   process.exit(1);
 });
-

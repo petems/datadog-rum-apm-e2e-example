@@ -19,7 +19,9 @@ async function hashPassword(password) {
 
 async function verifyPassword(password, hash) {
   // Support only bcrypt; reject non-bcrypt hashes
-  if (!isBcryptHash(hash)) return false;
+  if (!isBcryptHash(hash)) {
+    return false;
+  }
   return bcrypt.compare(password, hash);
 }
 

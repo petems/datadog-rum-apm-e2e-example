@@ -155,18 +155,30 @@ class AuthManager {
     const loginBtn = document.getElementById('loginBtn');
     const userMenu = document.getElementById('userMenu');
     const userEmail = document.getElementById('userEmail');
-    if (loginBtn) loginBtn.classList.add('d-none');
-    if (userMenu) userMenu.classList.remove('d-none');
-    if (userEmail) userEmail.textContent = user.email;
+    if (loginBtn) {
+      loginBtn.classList.add('d-none');
+    }
+    if (userMenu) {
+      userMenu.classList.remove('d-none');
+    }
+    if (userEmail) {
+      userEmail.textContent = user.email;
+    }
   }
 
   showLoggedOutState() {
     const loginBtn = document.getElementById('loginBtn');
     const userMenu = document.getElementById('userMenu');
     const userEmail = document.getElementById('userEmail');
-    if (loginBtn) loginBtn.classList.remove('d-none');
-    if (userMenu) userMenu.classList.add('d-none');
-    if (userEmail) userEmail.textContent = '';
+    if (loginBtn) {
+      loginBtn.classList.remove('d-none');
+    }
+    if (userMenu) {
+      userMenu.classList.add('d-none');
+    }
+    if (userEmail) {
+      userEmail.textContent = '';
+    }
   }
 
   showLoading(show) {
@@ -174,7 +186,9 @@ class AuthManager {
     const submitBtn = document.getElementById('loginSubmit');
 
     // Guard against missing elements to prevent runtime errors
-    if (!spinner || !submitBtn) return;
+    if (!spinner || !submitBtn) {
+      return;
+    }
 
     if (show) {
       spinner.classList.remove('d-none');
@@ -187,14 +201,18 @@ class AuthManager {
 
   showError(message) {
     const errorDiv = document.getElementById('loginError');
-    if (!errorDiv) return;
+    if (!errorDiv) {
+      return;
+    }
     errorDiv.textContent = message;
     errorDiv.classList.remove('d-none');
   }
 
   showSuccess(message) {
     const successDiv = document.getElementById('loginSuccess');
-    if (!successDiv) return;
+    if (!successDiv) {
+      return;
+    }
     successDiv.textContent = message;
     successDiv.classList.remove('d-none');
   }
@@ -202,13 +220,19 @@ class AuthManager {
   hideMessages() {
     const err = document.getElementById('loginError');
     const ok = document.getElementById('loginSuccess');
-    if (err) err.classList.add('d-none');
-    if (ok) ok.classList.add('d-none');
+    if (err) {
+      err.classList.add('d-none');
+    }
+    if (ok) {
+      ok.classList.add('d-none');
+    }
   }
 
   clearForm() {
     const form = document.getElementById('loginForm');
-    if (form) form.reset();
+    if (form) {
+      form.reset();
+    }
     this.hideMessages();
   }
 

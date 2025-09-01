@@ -1,5 +1,4 @@
 const net = require('net');
-const util = require('util');
 
 function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -50,4 +49,3 @@ module.exports = async () => {
     await wait(500);
   }
 };
-
