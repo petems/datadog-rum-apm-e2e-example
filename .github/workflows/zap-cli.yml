@@ -62,6 +62,19 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           cmd_options: '-a'
 
+      - name: Upload ZAP artifacts (fallback)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap_scan_${{ github.run_id }}_fallback
+          if-no-files-found: ignore
+          path: |
+            **/zap*.zip
+            **/zap*.html
+            **/zap*.md
+            **/zap*.xml
+            **/zap*.json
+
       - name: Stop stack
         if: always()
         run: |
