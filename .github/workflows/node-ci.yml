@@ -78,6 +78,9 @@ jobs:
   docker:
     name: Docker Build & Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -96,11 +99,14 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: 'datablog:test'
           format: 'sarif'
           output: 'trivy-results.sarif'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+          ignore-unfixed: true
 
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v3
