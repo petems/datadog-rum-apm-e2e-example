@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: write
       security-events: write
     steps:
       - name: Checkout
@@ -48,6 +49,9 @@ jobs:
         with:
           target: 'http://localhost:3000'
           rules_file_name: '.zap/rules.tsv'
+          # Allow creating/updating issues for pushes and same-repo PRs only
+          allow_issue_writing: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           cmd_options: '-a'
 
       - name: Stop stack
