@@ -53,10 +53,8 @@ app.use(
           "'self'",
           (req, res) => `'nonce-${res.locals.cspNonce}'`,
           'https://www.datadoghq-browser-agent.com',
-          'https://cdn.jsdelivr.net',
-          'https://ajax.googleapis.com',
         ],
-        'style-src': ["'self'", 'https://cdn.jsdelivr.net'],
+        'style-src': ["'self'"],
         'font-src': ["'self'"],
         'img-src': ["'self'", 'data:'],
         'connect-src': [
@@ -74,6 +72,38 @@ app.use(
     referrerPolicy: { policy: 'no-referrer' },
   })
 );
+
+// Robots.txt and sitemap.xml with dynamic base URL
+function inferBaseUrl(req) {
+  const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'http')
+    .split(',')[0]
+    .trim();
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  const envBase = process.env.PUBLIC_BASE_URL || process.env.SITE_BASE_URL;
+  if (envBase) {
+    return envBase.replace(/\/$/, '');
+  }
+  return `${proto}://${host}`;
+}
+
+app.get('/robots.txt', (req, res) => {
+  const base = inferBaseUrl(req);
+  res
+    .type('text/plain')
+    .send(`User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n`);
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  const base = inferBaseUrl(req);
+  res
+    .type('application/xml')
+    .send(
+      `<?xml version="1.0" encoding="UTF-8"?>\n` +
+        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+        `  <url><loc>${base}/</loc></url>\n` +
+        `</urlset>\n`
+    );
+});
 
 // Cache policy: disable caching for dynamic pages
 app.use((req, res, next) => {
