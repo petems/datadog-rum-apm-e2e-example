@@ -138,16 +138,27 @@ jobs:
       
       - name: Start application
         run: |
-          npm start &
-          for i in {1..60}; do
+          node ./bin/www > app.log 2>&1 &
+          for i in {1..90}; do
             if curl -sf http://localhost:3000 >/dev/null; then echo "app up"; break; fi; sleep 2; done
+          echo "--- app.log (last 100 lines) ---" || true
+          tail -n 100 app.log || true
         env:
-          NODE_ENV: test
+          NODE_ENV: e2e
+          HOST: 0.0.0.0
+          DD_TRACE_ENABLED: 'false'
           MONGODB_URI: mongodb://mongodb:27017/datablog-e2e
 
       - name: Run Playwright tests
         run: npx playwright test
 
+      - name: Upload app.log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-log
+          path: app.log
+          retention-days: 7
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: always()
