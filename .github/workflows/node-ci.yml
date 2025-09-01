@@ -135,6 +135,7 @@ jobs:
     name: End-to-End Tests
     runs-on: ubuntu-latest
     needs: [test, docker]
+<<<<<<< HEAD
     container:
       image: mcr.microsoft.com/playwright:v1.55.0-jammy
       options: --ipc=host
@@ -145,6 +146,8 @@ jobs:
         ports:
           - 27017:27017
 
+=======
+>>>>>>> 002b8b0 (ci(e2e): use docker-compose for app+mongo; add minimal .env for CI; wait for readiness and collect logs)
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -158,24 +161,57 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Ensure .env exists for app
-        run: |
-          if [ ! -f .env ]; then
-            if [ -f .env.example ]; then cp .env.example .env; else echo "DD_SITE=datadoghq.com" > .env; fi
-          fi
+      - name: Cache Playwright browsers
+        id: cache-playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
-      
-      - name: Start application
+      - name: Install system dependencies for browsers
+        run: npx playwright install-deps
+
+      - name: Install Playwright browsers (if needed)
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: npx playwright install
+
+      - name: Create minimal .env for Docker Compose
         run: |
-          npm start &
+          cat > .env <<'EOF'
+          # Minimal placeholders for CI to satisfy docker-compose env_file
+          DD_SITE=datadoghq.com
+          DD_API_KEY=placeholder
+          DD_APPLICATION_ID=placeholder
+          DD_CLIENT_TOKEN=placeholder
+          EOF
+
+      - name: Start services with Docker Compose
+        run: |
+          docker compose -f docker-compose.yml up -d mongo app
+
+      - name: Wait for app to be ready
+        run: |
           for i in {1..60}; do
-            if curl -sf http://localhost:3000 >/dev/null; then echo "app up"; break; fi; sleep 2; done
-        env:
-          NODE_ENV: test
-          MONGODB_URI: mongodb://mongodb:27017/datablog-e2e
+            if curl -fsS http://localhost:3000/ >/dev/null; then
+              echo "App is ready"; exit 0; fi;
+            echo "Waiting for app... ($i)"; sleep 2;
+          done
+          echo "App failed to start in time"; docker compose ps; docker compose logs app || true; exit 1
 
       - name: Run Playwright tests
         run: npx playwright test
+
+      - name: Docker logs on failure
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs app mongo || true
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
