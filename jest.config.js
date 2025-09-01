@@ -19,6 +19,7 @@ module.exports = {
     '!**/*.spec.js',
     '!bin/**',
     '!scripts/**',
+    '!public/**',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],

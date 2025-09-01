@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- DATADOG RUM -->
-    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-rum-us.js"></script>
+    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-rum-us.js" integrity="sha384-IYjwA4SyYSuGWv/BUWgCzXkRRJ+i9YhzDBbJGKUe+UKfzTEs8w/hgfU9ubdqzux5" crossorigin="anonymous"></script>
     <script nonce="<%= cspNonce %>">
         window.DD_RUM && window.DD_RUM.init({
             clientToken: '<%= rum.clientToken %>',
@@ -19,7 +19,7 @@
     </script>
 
     <!-- DATADOG BROWSER LOG COLLECTION -->
-    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs-us.js"></script>
+    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs-us.js" integrity="sha384-NjDY+szhvXY753BEcctHg6gkMRNU9fXhUo2X1XQ/dknITLaW8LjNt+xCHkw1YQWA" crossorigin="anonymous"></script>
     <script nonce="<%= cspNonce %>">
         window.DD_LOGS && DD_LOGS.init({
             clientToken: '<%= rum.clientToken %>',
@@ -34,9 +34,9 @@
     </script>
 
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/vendor/bootstrap.min.css" rel="stylesheet">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Removed Google Fonts to satisfy CSP and reduce external domains -->
     <!-- Custom CSS -->
     <link href="/stylesheets/style.css" type="text/css" rel="stylesheet">
     
@@ -135,6 +135,6 @@
     </div>
 
     <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/vendor/bootstrap.bundle.min.js"></script>
 </body>
 </html>
