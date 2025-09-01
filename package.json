@@ -23,7 +23,7 @@
   },
   "lint-staged": {
     "*.js": [
-      "eslint --fix --cache --max-warnings=0",
+      "eslint --fix --cache --no-warn-ignored --max-warnings=0",
       "prettier --write",
       "jest -c jest.lintstaged.config.js --findRelatedTests --bail --passWithNoTests"
     ],

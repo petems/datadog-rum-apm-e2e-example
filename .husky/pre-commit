@@ -6,4 +6,4 @@ if [ -n "$CI" ]; then
 fi
 
 # Run fast checks on staged files
-npx --no -- lint-staged
+HUSKY_GIT_PARAMS="$*" npx --no -- lint-staged

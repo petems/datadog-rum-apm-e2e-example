@@ -48,31 +48,58 @@ app.use(
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
-        // Allow our own assets and trusted CDNs used in views
         'default-src': ["'self'"],
         'script-src': [
           "'self'",
           (req, res) => `'nonce-${res.locals.cspNonce}'`,
           'https://www.datadoghq-browser-agent.com',
           'https://cdn.jsdelivr.net',
+          'https://ajax.googleapis.com',
         ],
-        'style-src': [
-          "'self'",
-          'https://cdn.jsdelivr.net',
-          'https://fonts.googleapis.com',
-        ],
-        'font-src': ["'self'", 'https://fonts.gstatic.com'],
+        'style-src': ["'self'", 'https://cdn.jsdelivr.net'],
+        'font-src': ["'self'"],
         'img-src': ["'self'", 'data:'],
-        'connect-src': ["'self'", 'https://*.datadoghq.com'],
+        'connect-src': [
+          "'self'",
+          'https://*.datadoghq.com',
+          'https://*.datadoghq.eu',
+          'https://*.datad0g.com',
+        ],
         'frame-ancestors': ["'self'"],
       },
     },
-    crossOriginEmbedderPolicy: false, // for compatibility with certain libs
+    crossOriginEmbedderPolicy: true,
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
+    crossOriginResourcePolicy: { policy: 'same-origin' },
+    referrerPolicy: { policy: 'no-referrer' },
   })
 );
 
+// Cache policy: disable caching for dynamic pages
+app.use((req, res, next) => {
+  res.setHeader(
+    'Cache-Control',
+    'no-store, no-cache, must-revalidate, private'
+  );
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+});
+
 // Create public path containing images, javascript, and stylesheets
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(
+  express.static(path.join(__dirname, 'public'), {
+    setHeaders: (res, p) => {
+      if (
+        /(\.js|\.css|\.png|\.jpg|\.jpeg|\.gif|\.svg|\.ico|\.woff2?|\.ttf|\.eot)$/i.test(
+          p
+        )
+      ) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  })
+);
 
 // Routers for each page
 const indexRouter = require('./routes/index');

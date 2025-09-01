@@ -3,9 +3,11 @@
         <!-- DATADOG RUM -->
         <script
             src="https://www.datadoghq-browser-agent.com/datadog-rum-us.js"
-            type="text/javascript">
+            type="text/javascript"
+            integrity="sha384-IYjwA4SyYSuGWv/BUWgCzXkRRJ+i9YhzDBbJGKUe+UKfzTEs8w/hgfU9ubdqzux5"
+            crossorigin="anonymous">
         </script>
-        <script>
+        <script nonce="<%= cspNonce %>">
             window.DD_RUM && window.DD_RUM.init({
                 clientToken: '<%= rum.clientToken %>',
                 applicationId: '<%= rum.applicationId %>',
@@ -16,7 +18,7 @@
         </script>
 
         <!-- ANGULAR & CSS -->
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.9/angular.min.js"></script>
+        <script src="/vendor/angular.min.js"></script>
         <link href="/stylesheets/style.css" type="text/css" rel="stylesheet">
 
         <title>Welcome to Datablog!!!</title>
