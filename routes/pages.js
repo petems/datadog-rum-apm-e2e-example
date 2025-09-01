@@ -6,9 +6,7 @@ const rum = require('../config/rum');
 // StatsD setup (disabled in test to avoid network flakiness)
 const StatsD = require('hot-shots');
 const dogstatsd =
-  process.env.NODE_ENV === 'test'
-    ? { increment: () => {} }
-    : new StatsD();
+  process.env.NODE_ENV === 'test' ? { increment: () => {} } : new StatsD();
 
 /* GET individual page listing. */
 router.get('/:page_id', async (req, res) => {
