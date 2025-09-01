@@ -1,33 +1,36 @@
 const { defineConfig, devices } = require('@playwright/test');
+const isCI = !!process.env.CI;
 
 module.exports = defineConfig({
   testDir: './test/e2e',
 
   // Parallel execution
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  fullyParallel: !isCI,
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
+  workers: isCI ? 1 : undefined,
 
   // Reporter configuration
-  reporter: [
-    ['html'],
-    ['json', { outputFile: 'test-results/results.json' }],
-    ...(process.env.CI ? [['github']] : []),
-  ],
+  reporter: isCI
+    ? [['github'], ['json', { outputFile: 'test-results/results.json' }]]
+    : [['html'], ['json', { outputFile: 'test-results/results.json' }]],
 
   // Global test configuration
   use: {
     baseURL: 'http://localhost:3000',
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    headless: true,
+    trace: isCI ? 'off' : 'on-first-retry',
+    screenshot: isCI ? 'off' : 'only-on-failure',
+    video: isCI ? 'off' : 'retain-on-failure',
 
     // Browser context options
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     locale: 'en-US',
     timezoneId: 'America/New_York',
+    launchOptions: {
+      args: ['--no-sandbox', '--disable-dev-shm-usage'],
+    },
   },
 
   // Test projects for different browsers

@@ -6,7 +6,7 @@
     
     <!-- DATADOG RUM -->
     <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-rum-us.js"></script>
-    <script>
+    <script nonce="<%= cspNonce %>">
         window.DD_RUM && window.DD_RUM.init({
             clientToken: '<%= rum.clientToken %>',
             applicationId: '<%= rum.applicationId %>',
@@ -20,7 +20,7 @@
 
     <!-- DATADOG BROWSER LOG COLLECTION -->
     <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs-us.js"></script>
-    <script>
+    <script nonce="<%= cspNonce %>">
         window.DD_LOGS && DD_LOGS.init({
             clientToken: '<%= rum.clientToken %>',
             forwardErrorsToLogs: true,

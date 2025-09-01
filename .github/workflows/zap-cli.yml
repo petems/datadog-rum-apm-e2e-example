@@ -1,0 +1,57 @@
+name: ZAP Baseline Scan
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  zap:
+    name: OWASP ZAP Baseline
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Compose
+        uses: docker/setup-buildx-action@v3
+
+      - name: Prepare .env for docker-compose
+        run: |
+          if [ ! -f .env ]; then
+            if [ -f .env.example ]; then
+              cp .env.example .env
+            else
+              cat > .env <<'EOF'
+DD_SITE=datadoghq.com
+DD_API_KEY=DUMMY
+DD_CLIENT_TOKEN=dummy
+DD_APPLICATION_ID=dummy
+DD_SERVICE=datablog
+DD_ENV=ci
+DD_VERSION=2.0.0
+EOF
+            fi
+          fi
+
+      - name: Start stack (app + mongo)
+        run: |
+          docker compose -f docker-compose.yml up -d --build app mongo
+          for i in {1..60}; do
+            if curl -sf http://localhost:3000 >/dev/null; then echo "app up"; break; fi; sleep 2; done
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+      - name: Stop stack
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml down -v

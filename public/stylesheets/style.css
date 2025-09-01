@@ -267,3 +267,14 @@ textarea.form-control {
 .form-control:valid {
   border-color: #27ae60;
 }
+/* Utility classes replacing inline styles in templates */
+.pos-fixed-top-right {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+}
+
+.fs-6rem {
+  font-size: 6rem !important;
+}

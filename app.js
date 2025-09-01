@@ -13,6 +13,8 @@ const express = require('express');
 const path = require('path');
 const logger = require('./logger');
 require('./mongo');
+const helmet = require('helmet');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -26,6 +28,41 @@ app.set('view engine', 'ejs');
 // Handlers for JSON and URL Encodings
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Per-request CSP nonce for inline scripts in templates
+app.use((req, res, next) => {
+  res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+
+// Security headers via Helmet (CSP with nonces, no unsafe-inline)
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        // Allow our own assets and trusted CDNs used in views
+        'default-src': ["'self'"],
+        'script-src': [
+          "'self'",
+          (req, res) => `'nonce-${res.locals.cspNonce}'`,
+          'https://www.datadoghq-browser-agent.com',
+          'https://cdn.jsdelivr.net',
+        ],
+        'style-src': [
+          "'self'",
+          'https://cdn.jsdelivr.net',
+          'https://fonts.googleapis.com',
+        ],
+        'font-src': ["'self'", 'https://fonts.gstatic.com'],
+        'img-src': ["'self'", 'data:'],
+        'connect-src': ["'self'", 'https://*.datadoghq.com'],
+        'frame-ancestors': ["'self'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false, // for compatibility with certain libs
+  })
+);
 
 // Create public path containing images, javascript, and stylesheets
 app.use(express.static(path.join(__dirname, 'public')));

@@ -10,12 +10,16 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "lint": "eslint .",
+    "lint:ci": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
     "screenshot": "node scripts/screenshot.js",
     "seed": "node scripts/seed-data.js",
-    "prepare": "husky install || true"
+    "prepare": "husky install || true",
+    "audit": "npm audit --prod --audit-level=high",
+    "audit:all": "npm audit --audit-level=moderate",
+    "audit:ci": "npm audit --prod --audit-level=high --json"
   },
   "lint-staged": {
     "*.js": [
@@ -30,6 +34,7 @@
   "dependencies": {
     "body-parser": "^2.2.0",
     "bunyan": "^1.8.15",
+    "helmet": "^7.2.0",
     "dd-trace": "^5.28.0",
     "debug": "~4.4.1",
     "ejs": "^3.1.10",
@@ -45,6 +50,7 @@
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
     "eslint": "^9.34.0",
+    "eslint-plugin-regexp": "^2.6.0",
     "husky": "^9.1.7",
     "jest": "^30.1.1",
     "lint-staged": "^16.1.5",
