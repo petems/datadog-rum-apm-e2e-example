@@ -159,7 +159,6 @@ jobs:
 
       - name: Install system dependencies for browsers
         run: npx playwright install-deps
-
       - name: Install Playwright browsers (if needed)
         if: steps.cache-playwright.outputs.cache-hit != 'true'
         run: npx playwright install
