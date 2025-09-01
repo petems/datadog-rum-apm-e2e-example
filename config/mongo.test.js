@@ -18,7 +18,7 @@ describe('Mongo Configuration', () => {
 
     expect(mongoConfig.uri).toBe('mongodb://localhost:27017');
     expect(mongoConfig.options).toEqual({
-      dbName: 'pages',
+      dbName: 'datablog',
     });
   });
 
@@ -30,7 +30,7 @@ describe('Mongo Configuration', () => {
 
     expect(mongoConfig.uri).toBe('mongodb://mongo:27017');
     expect(mongoConfig.options).toEqual({
-      dbName: 'pages',
+      dbName: 'datablog',
     });
   });
 
@@ -39,7 +39,7 @@ describe('Mongo Configuration', () => {
 
     expect(mongoConfig.options.useNewUrlParser).toBeUndefined();
     expect(mongoConfig.options.useUnifiedTopology).toBeUndefined();
-    expect(mongoConfig.options.dbName).toBe('pages');
+    expect(mongoConfig.options.dbName).toBe('datablog');
   });
 
   it('should export both uri and options', () => {

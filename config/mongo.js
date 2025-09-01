@@ -7,7 +7,7 @@ if (!process.env.MONGODB_URI && process.env.DOCKER) {
 
 const options = {
   // Keep default DB for local/dev unless URI explicitly specifies one
-  dbName: 'pages',
+  dbName: 'datablog',
 };
 
 module.exports = {
