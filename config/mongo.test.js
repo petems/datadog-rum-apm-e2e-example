@@ -18,8 +18,6 @@ describe('Mongo Configuration', () => {
 
     expect(mongoConfig.uri).toBe('mongodb://localhost:27017');
     expect(mongoConfig.options).toEqual({
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       dbName: 'pages',
     });
   });
@@ -32,8 +30,6 @@ describe('Mongo Configuration', () => {
 
     expect(mongoConfig.uri).toBe('mongodb://mongo:27017');
     expect(mongoConfig.options).toEqual({
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       dbName: 'pages',
     });
   });
@@ -41,8 +37,8 @@ describe('Mongo Configuration', () => {
   it('should have correct MongoDB connection options', () => {
     const mongoConfig = require('./mongo');
 
-    expect(mongoConfig.options.useNewUrlParser).toBe(true);
-    expect(mongoConfig.options.useUnifiedTopology).toBe(true);
+    expect(mongoConfig.options.useNewUrlParser).toBeUndefined();
+    expect(mongoConfig.options.useUnifiedTopology).toBeUndefined();
     expect(mongoConfig.options.dbName).toBe('pages');
   });
 

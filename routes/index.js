@@ -4,6 +4,7 @@ const router = express.Router();
 const rateLimit = require('express-rate-limit');
 
 const pageModel = require('../mongo/models/pageModel');
+const mongoose = require('mongoose');
 const rum = require('../config/rum');
 
 // Rate limiting for index page - prevent abuse of database queries
@@ -19,16 +20,22 @@ const indexRateLimit = rateLimit({
 router.get(['/', '/v1'], indexRateLimit, async function (req, res) {
   logger.info(`Request for index page: ${req.url}`);
 
+  // If DB not connected yet, render empty state instead of erroring
+  if (mongoose.connection.readyState !== 1) {
+    return res.render('index', { title: 'Home Page', pages: [], rum });
+  }
+
   try {
     const pages = await pageModel
       .find({}, null, { sort: { id: 'descending' } })
       .limit(25);
 
     logger.info(`Found pages: ${pages.length}`);
-    res.render('index', { title: 'Home Page', pages, rum });
+    return res.render('index', { title: 'Home Page', pages, rum });
   } catch (err) {
-    logger.error(`Error encountered${err}`);
-    throw err;
+    // Be resilient during startup or transient DB errors
+    logger.error(`Error encountered ${err}`);
+    return res.render('index', { title: 'Home Page', pages: [], rum });
   }
 });
 

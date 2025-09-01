@@ -6,8 +6,6 @@ if (!process.env.MONGODB_URI && process.env.DOCKER) {
 }
 
 const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   // Keep default DB for local/dev unless URI explicitly specifies one
   dbName: 'pages',
 };

@@ -34,23 +34,23 @@
   "dependencies": {
     "body-parser": "^2.2.0",
     "bunyan": "^1.8.15",
-    "helmet": "^7.2.0",
     "dd-trace": "^5.28.0",
     "debug": "~4.4.1",
     "ejs": "^3.1.10",
     "escape-html": "^1.0.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
+    "helmet": "^7.2.0",
     "hot-shots": "^11.2.0",
     "http-errors": "~2.0.0",
-    "mongoose": "^5.9.7"
+    "mongoose": "^8.18.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0",
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
+    "@playwright/test": "^1.40.0",
     "eslint": "^9.34.0",
-    "eslint-plugin-regexp": "^2.6.0",
+    "eslint-plugin-regexp": "^2.10.0",
     "husky": "^9.1.7",
     "jest": "^30.1.1",
     "lint-staged": "^16.1.5",
