@@ -166,3 +166,25 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+  # GitHub Actions Lint
+  actions-lint:
+    name: GitHub Actions Lint (actionlint)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Run actionlint and output SARIF
+        uses: rhysd/actionlint@v1
+        continue-on-error: true
+        with:
+          args: -format sarif -out actionlint-results.sarif
+
+      - name: Upload actionlint SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: actionlint-results.sarif
