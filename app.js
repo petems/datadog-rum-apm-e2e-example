@@ -129,6 +129,20 @@ app.get('/sitemap.xml', (req, res) => {
     );
 });
 
+// Health check endpoint
+app.get('/healthz', (req, res) => {
+  const healthStatus = {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: process.env.npm_package_version || '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    requestId: req.requestId,
+  };
+
+  res.status(200).json(healthStatus);
+});
+
 // Cache policy: disable caching for dynamic pages
 app.use((req, res, next) => {
   res.setHeader(
