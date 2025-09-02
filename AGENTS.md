@@ -1,5 +1,19 @@
 # Repository Guidelines
 
+## Agent Workflow (Codex CLI / Claude)
+
+- Planning: use `update_plan` for multi-step work; keep exactly one step `in_progress` until done.
+- Preambles: before tool calls, add a brief 1–2 sentence note grouping related actions.
+- Editing: use `apply_patch`; keep changes minimal, focused, and consistent with existing style.
+- Shell usage: prefer `rg` for search; read files in ≤250-line chunks to avoid truncation.
+- Validation: run targeted tests where appropriate; don’t “fix” unrelated failing tests.
+- Commits: follow Conventional Commits; stage only related files; avoid bundling unrelated diffs.
+- Secrets: never commit secrets; use `.env.example` and local `.env` only.
+- Tone & format: concise, direct, friendly; avoid heavy formatting unless necessary for clarity.
+- PRs: use the template in this document; attach screenshots for UI changes.
+
+Related docs: see `README.md` and `docs/DEVELOPMENT.md` for workflows, commands, and architecture.
+
 ## Project Structure & Module Organization
 
 - `app.js` / `bin/www`: Express app and HTTP server entry.
