@@ -239,6 +239,14 @@ jobs:
           DD_API_KEY=placeholder
           DD_APPLICATION_ID=placeholder
           DD_CLIENT_TOKEN=placeholder
+          
+          PORT=3000
+          MONGODB_URI=mongodb://mongo:27017/datablog
+          JWT_ACCESS_SECRET=change-me-secret
+          JWT_REFRESH_SECRET=change-me-too
+          ACCESS_TOKEN_TTL=15m
+          REFRESH_TOKEN_TTL=7d
+          NODE_ENV=test
           EOF
 
       - name: Start services with Docker Compose
