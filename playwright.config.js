@@ -3,11 +3,9 @@ const isCI = !!process.env.CI;
 
 module.exports = defineConfig({
   testDir: './test/e2e',
-  // Quick local iteration: verify Mongo connectivity before tests start.
-  // Skips in CI by default (set CI env var).
-  globalSetup: process.env.CI
-    ? undefined
-    : require.resolve('./test/e2e/global-setup.js'),
+  // Global setup and teardown for database seeding
+  globalSetup: require.resolve('./test/e2e/global-setup.js'),
+  globalTeardown: require.resolve('./test/e2e/global-teardown.js'),
 
   // Parallel execution
   fullyParallel: !isCI,

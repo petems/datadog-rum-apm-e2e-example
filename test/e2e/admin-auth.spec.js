@@ -1,34 +1,15 @@
 const { test, expect } = require('@playwright/test');
-const { exec } = require('child_process');
-const { promisify } = require('util');
-
-const execAsync = promisify(exec);
+const DatabaseSeeder = require('./seed/seed');
 
 test.describe('Admin Authentication', () => {
-  const adminCredentials = {
-    email: 'admin@example.com',
-    password: 'AdminPassword123',
-  };
+  const adminCredentials = DatabaseSeeder.getTestCredentials().admin;
 
-  test.beforeAll('Create admin user', async () => {
-    // Create admin user using the script
-    try {
-      const { stdout, stderr } = await execAsync(
-        `node scripts/create-admin.js ${adminCredentials.email} ${adminCredentials.password}`
-      );
-      console.log('Admin user creation output:', stdout);
-      if (stderr) {
-        console.log('Admin user creation stderr:', stderr);
-      }
-    } catch (error) {
-      console.error('Failed to create admin user:', error.message);
-      throw error;
-    }
+  test.beforeAll('Seed database', async () => {
+    await DatabaseSeeder.seed();
   });
 
-  test('should create admin user successfully via script', async () => {
+  test('should seed database successfully', async () => {
     // This test verifies that the beforeAll hook succeeded
-    // The actual creation is tested by the script execution
     expect(true).toBeTruthy();
   });
 
