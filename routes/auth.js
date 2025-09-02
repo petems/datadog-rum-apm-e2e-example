@@ -1,18 +1,7 @@
 const express = require('express');
 const logger = require('../logger');
 const cookieParser = require('cookie-parser');
-let csurf;
-try {
-  // Optional in test environments; falls back to a no-op middleware
-  csurf = require('csurf');
-} catch {
-  csurf = function () {
-    return function (req, _res, next) {
-      req.csrfToken = () => 'test';
-      return next();
-    };
-  };
-}
+const { csrfProtection, generateCsrfToken } = require('../middlewares/csrf');
 const helmet = require('helmet');
 const cors = require('cors');
 const User = require('../mongo/models/userModel');
@@ -43,14 +32,13 @@ router.use(
   })
 );
 
-// CSRF protection for state-changing requests using cookie-based refresh token
-// CSRF cookie should be sent for same-origin requests
-const csrfProtection = csurf({ cookie: { sameSite: 'lax', httpOnly: true, path: '/' } });
+// CSRF protection for state-changing requests using double submit cookie pattern
 router.use(csrfProtection);
 
 // Public endpoint for clients to fetch a CSRF token
 router.get('/csrf', (req, res) => {
-  return res.status(200).json({ csrfToken: req.csrfToken() });
+  const token = generateCsrfToken(req, res);
+  return res.status(200).json({ csrfToken: token });
 });
 
 // Helpers
@@ -103,10 +91,11 @@ router.post('/register', authLimiter, async (req, res) => {
 router.post('/login', authLimiter, csrfProtection, async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
-    logger && logger.warn(
-      { path: req.path, method: req.method, requestId: req.requestId },
-      'Login failed: missing email or password'
-    );
+    logger &&
+      logger.warn(
+        { path: req.path, method: req.method, requestId: req.requestId },
+        'Login failed: missing email or password'
+      );
     return res.status(400).json({
       code: 'BAD_REQUEST',
       message: 'email and password are required',
@@ -125,17 +114,18 @@ router.post('/login', authLimiter, csrfProtection, async (req, res) => {
     }
     if (!user || !ok) {
       const hashPrefix = user?.passwordHash?.slice(0, 4) || null;
-      logger && logger.warn(
-        {
-          path: req.path,
-          method: req.method,
-          requestId: req.requestId,
-          email,
-          userFound: Boolean(user),
-          hashPrefix,
-        },
-        'Login failed: invalid credentials'
-      );
+      logger &&
+        logger.warn(
+          {
+            path: req.path,
+            method: req.method,
+            requestId: req.requestId,
+            email,
+            userFound: Boolean(user),
+            hashPrefix,
+          },
+          'Login failed: invalid credentials'
+        );
       return res
         .status(401)
         .json({ code: 'INVALID_CREDENTIALS', message: 'Invalid credentials' });
@@ -152,10 +142,16 @@ router.post('/login', authLimiter, csrfProtection, async (req, res) => {
       tokenVersion: user.tokenVersion,
     });
     setRefreshCookie(res, refresh);
-    logger && logger.info(
-      { path: req.path, method: req.method, requestId: req.requestId, userId: user._id.toString() },
-      'Login success'
-    );
+    logger &&
+      logger.info(
+        {
+          path: req.path,
+          method: req.method,
+          requestId: req.requestId,
+          userId: user._id.toString(),
+        },
+        'Login success'
+      );
     return res
       .status(200)
       .json({ accessToken: access, user: toPublicUser(user) });
@@ -228,20 +224,26 @@ router.post('/refresh', authLimiter, csrfProtection, async (req, res) => {
 });
 
 // POST /api/auth/logout
-router.post('/logout', authLimiter, csrfProtection, authenticate, async (req, res) => {
-  try {
-    await User.findByIdAndUpdate(
-      { _id: { $eq: req.user.id } },
-      { $inc: { tokenVersion: 1 } }
-    );
-    clearRefreshCookie(res);
-    return res.status(200).json({ message: 'Logged out' });
-  } catch {
-    return res
-      .status(500)
-      .json({ code: 'INTERNAL_ERROR', message: 'Logout failed' });
+router.post(
+  '/logout',
+  authLimiter,
+  csrfProtection,
+  authenticate,
+  async (req, res) => {
+    try {
+      await User.findByIdAndUpdate(
+        { _id: { $eq: req.user.id } },
+        { $inc: { tokenVersion: 1 } }
+      );
+      clearRefreshCookie(res);
+      return res.status(200).json({ message: 'Logged out' });
+    } catch {
+      return res
+        .status(500)
+        .json({ code: 'INTERNAL_ERROR', message: 'Logout failed' });
+    }
   }
-});
+);
 
 // GET /api/auth/me
 router.get('/me', authLimiter, authenticate, async (req, res) => {
@@ -262,9 +264,12 @@ router.get(
 );
 
 // CSRF error handler for this router
-
 router.use((err, _req, res, _next) => {
-  if (err && err.code === 'EBADCSRFTOKEN') {
+  if (
+    err &&
+    (err.code === 'EBADCSRFTOKEN' ||
+      err.message?.toLowerCase().includes('csrf'))
+  ) {
     return res
       .status(403)
       .json({ code: 'CSRF_TOKEN_INVALID', message: 'Invalid CSRF token' });

@@ -10,9 +10,7 @@ const { verifyAccess } = require('../utils/jwt');
 // Optional auth via Authorization header or refresh cookie
 const optionalAuthenticate = (req, _res, next) => {
   const authHeader = req.headers.authorization || '';
-  const bearer = authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : null;
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
   const token = bearer || null;
 
   if (!token) {

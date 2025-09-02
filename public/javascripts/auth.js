@@ -69,7 +69,9 @@ class AuthManager {
 
     try {
       // First get CSRF token
-      const csrfResponse = await fetch('/api/auth/csrf', { credentials: 'same-origin' });
+      const csrfResponse = await fetch('/api/auth/csrf', {
+        credentials: 'same-origin',
+      });
       const csrfData = await csrfResponse.json();
 
       // Then login
@@ -117,7 +119,9 @@ class AuthManager {
     try {
       if (this.accessToken) {
         // Get CSRF token for logout
-        const csrfResponse = await fetch('/api/auth/csrf', { credentials: 'same-origin' });
+        const csrfResponse = await fetch('/api/auth/csrf', {
+          credentials: 'same-origin',
+        });
         const csrfData = await csrfResponse.json();
 
         // Call logout endpoint
@@ -250,7 +254,8 @@ class AuthManager {
     banner.id = 'adminBanner';
     banner.className = 'alert alert-success d-flex align-items-center my-3';
     banner.setAttribute('role', 'alert');
-    banner.innerHTML = '✅ <strong class="ms-2">Admin Mode:</strong> You can view all users\' pages.';
+    banner.innerHTML =
+      '✅ <strong class="ms-2">Admin Mode:</strong> You can view all users\' pages.';
     container.prepend(banner);
   }
 }

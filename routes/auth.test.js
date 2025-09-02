@@ -125,4 +125,3 @@ describe('Auth routes - login', () => {
     );
   });
 });
-

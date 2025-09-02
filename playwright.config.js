@@ -5,7 +5,9 @@ module.exports = defineConfig({
   testDir: './test/e2e',
   // Quick local iteration: verify Mongo connectivity before tests start.
   // Skips in CI by default (set CI env var).
-  globalSetup: process.env.CI ? undefined : require.resolve('./test/e2e/global-setup.js'),
+  globalSetup: process.env.CI
+    ? undefined
+    : require.resolve('./test/e2e/global-setup.js'),
 
   // Parallel execution
   fullyParallel: !isCI,
@@ -83,7 +85,8 @@ module.exports = defineConfig({
           PORT: '3000',
           NODE_ENV: process.env.NODE_ENV || 'development',
           MONGODB_URI:
-            process.env.LOCAL_MONGODB_URI || 'mongodb://127.0.0.1:27017/datablog',
+            process.env.LOCAL_MONGODB_URI ||
+            'mongodb://127.0.0.1:27017/datablog',
         },
       },
 

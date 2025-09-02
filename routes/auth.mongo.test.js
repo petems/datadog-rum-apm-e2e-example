@@ -94,4 +94,3 @@ describe('Auth routes (Mongo integration)', () => {
     );
   }, 15000);
 });
-
