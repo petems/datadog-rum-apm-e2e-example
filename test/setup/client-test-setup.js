@@ -1,4 +1,4 @@
-// Client-side test setup for JSDOM environment
+// Client-side test setup for happy-dom environment
 
 // Mock console methods to reduce noise during tests
 global.console = {
@@ -32,5 +32,5 @@ beforeEach(() => {
   document.head.appendChild(metaViewport);
 });
 
-// Bootstrap CSS classes work natively in JSDOM, no need to mock
-// DOM methods work natively in JSDOM, no need to mock them
+// Bootstrap CSS classes work natively in happy-dom, no need to mock
+// DOM methods work natively in happy-dom, no need to mock them

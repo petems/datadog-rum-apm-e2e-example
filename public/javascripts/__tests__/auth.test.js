@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @happy-dom/jest-environment
  */
 
 // Test constants to avoid hardcoded passwords
@@ -10,19 +10,8 @@ const WRONG_PASSWORD = 'wrong-test-password';
 // Mock fetch globally
 global.fetch = jest.fn();
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-};
-global.localStorage = localStorageMock;
-
 // Mock location.reload
 const mockReload = jest.fn();
-delete window.location;
-window.location = { reload: mockReload };
 
 describe('AuthManager RUM Integration', () => {
   let AuthManager;
@@ -45,11 +34,20 @@ describe('AuthManager RUM Integration', () => {
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
-    localStorageMock.getItem.mockReturnValue(null);
+
+    // Clear localStorage before each test
+    window.localStorage.clear();
+
     mockReload.mockClear();
 
     // Mock setTimeout to execute callback immediately
     global.setTimeout = jest.fn(callback => callback());
+
+    // Ensure window.location.reload is properly mocked
+    Object.defineProperty(window, 'location', {
+      value: { reload: mockReload },
+      writable: true,
+    });
 
     // Re-create DOM elements
     document.body.innerHTML = `
@@ -121,8 +119,7 @@ describe('AuthManager RUM Integration', () => {
       });
 
       // Verify token was stored
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        'accessToken',
+      expect(window.localStorage.getItem('accessToken')).toBe(
         'mock-access-token'
       );
     });
@@ -159,8 +156,7 @@ describe('AuthManager RUM Integration', () => {
       await authManager.handleLogin(event);
 
       // Should not throw error and should still store token
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        'accessToken',
+      expect(window.localStorage.getItem('accessToken')).toBe(
         'mock-access-token'
       );
 
@@ -179,7 +175,7 @@ describe('AuthManager RUM Integration', () => {
         },
       };
 
-      localStorageMock.getItem.mockReturnValue('valid-token');
+      window.localStorage.setItem('accessToken', 'valid-token');
       authManager.accessToken = 'valid-token';
 
       fetch.mockResolvedValueOnce({
@@ -198,7 +194,7 @@ describe('AuthManager RUM Integration', () => {
     });
 
     test('should not set user data when validation fails', async () => {
-      localStorageMock.getItem.mockReturnValue('invalid-token');
+      window.localStorage.setItem('accessToken', 'invalid-token');
       authManager.accessToken = 'invalid-token';
 
       fetch.mockResolvedValueOnce({
@@ -209,11 +205,11 @@ describe('AuthManager RUM Integration', () => {
       await authManager.validateToken();
 
       expect(mockDD_RUM.setUser).not.toHaveBeenCalled();
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('accessToken');
+      expect(window.localStorage.getItem('accessToken')).toBeNull();
     });
 
     test('should handle network errors during token validation', async () => {
-      localStorageMock.getItem.mockReturnValue('some-token');
+      window.localStorage.setItem('accessToken', 'some-token');
       authManager.accessToken = 'some-token';
 
       fetch.mockRejectedValueOnce(new Error('Network error'));
@@ -221,14 +217,14 @@ describe('AuthManager RUM Integration', () => {
       await authManager.validateToken();
 
       expect(mockDD_RUM.setUser).not.toHaveBeenCalled();
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('accessToken');
+      expect(window.localStorage.getItem('accessToken')).toBeNull();
     });
   });
 
   describe('Logout - RUM Integration', () => {
     test('should clear user data in RUM on logout', async () => {
       authManager.accessToken = 'some-token';
-      localStorageMock.getItem.mockReturnValue('some-token');
+      window.localStorage.setItem('accessToken', 'some-token');
 
       fetch
         .mockResolvedValueOnce({
@@ -246,13 +242,13 @@ describe('AuthManager RUM Integration', () => {
 
       expect(mockDD_RUM.clearUser).toHaveBeenCalled();
       expect(mockDD_RUM.addAction).toHaveBeenCalledWith('user_logout');
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('accessToken');
+      expect(window.localStorage.getItem('accessToken')).toBeNull();
       expect(mockReload).toHaveBeenCalled();
     });
 
     test('should clear user data even when logout API call fails', async () => {
       authManager.accessToken = 'some-token';
-      localStorageMock.getItem.mockReturnValue('some-token');
+      window.localStorage.setItem('accessToken', 'some-token');
 
       fetch
         .mockResolvedValueOnce({
@@ -268,12 +264,12 @@ describe('AuthManager RUM Integration', () => {
 
       expect(mockDD_RUM.clearUser).toHaveBeenCalled();
       expect(mockDD_RUM.addAction).toHaveBeenCalledWith('user_logout');
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('accessToken');
+      expect(window.localStorage.getItem('accessToken')).toBeNull();
     });
 
     test('should handle logout when no token exists', async () => {
       authManager.accessToken = null;
-      localStorageMock.getItem.mockReturnValue(null);
+      expect(window.localStorage.getItem('accessToken')).toBeNull();
 
       authManager.logout();
 
@@ -322,7 +318,7 @@ describe('AuthManager RUM Integration', () => {
         },
       };
 
-      localStorageMock.getItem.mockReturnValue('admin-token');
+      window.localStorage.setItem('accessToken', 'admin-token');
       authManager.accessToken = 'admin-token';
 
       fetch.mockResolvedValueOnce({
