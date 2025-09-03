@@ -2,6 +2,11 @@
  * @jest-environment jsdom
  */
 
+// Test constants to avoid hardcoded passwords
+const TEST_PASSWORD = 'test-password-123';
+const TEST_EMAIL = 'test@example.com';
+const WRONG_PASSWORD = 'wrong-test-password';
+
 // Mock fetch globally
 global.fetch = jest.fn();
 
@@ -33,8 +38,8 @@ describe('AuthManager RUM Integration', () => {
     };
     window.DD_RUM = mockDD_RUM;
 
-    // Load the AuthManager class from the module version
-    AuthManager = require('../auth-module.js');
+    // Load the AuthManager class from the refactored auth.js
+    AuthManager = require('../auth.js');
   });
 
   beforeEach(() => {
@@ -92,8 +97,8 @@ describe('AuthManager RUM Integration', () => {
         });
 
       // Set up form values
-      document.getElementById('email').value = 'test@example.com';
-      document.getElementById('password').value = 'password123';
+      document.getElementById('email').value = TEST_EMAIL;
+      document.getElementById('password').value = TEST_PASSWORD;
 
       // Trigger login
       const event = new Event('submit', { bubbles: true });
@@ -145,8 +150,8 @@ describe('AuthManager RUM Integration', () => {
           json: () => Promise.resolve(mockUserData),
         });
 
-      document.getElementById('email').value = 'test@example.com';
-      document.getElementById('password').value = 'password123';
+      document.getElementById('email').value = TEST_EMAIL;
+      document.getElementById('password').value = TEST_PASSWORD;
 
       const event = new Event('submit', { bubbles: true });
       event.preventDefault = jest.fn();
@@ -290,8 +295,8 @@ describe('AuthManager RUM Integration', () => {
           json: () => Promise.resolve({ message: 'Invalid credentials' }),
         });
 
-      document.getElementById('email').value = 'test@example.com';
-      document.getElementById('password').value = 'wrongpassword';
+      document.getElementById('email').value = TEST_EMAIL;
+      document.getElementById('password').value = WRONG_PASSWORD;
 
       const event = new Event('submit', { bubbles: true });
       event.preventDefault = jest.fn();

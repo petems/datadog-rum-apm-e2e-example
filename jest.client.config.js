@@ -41,12 +41,4 @@ module.exports = {
     // Mock any CSS imports if needed
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
   },
-
-  // Global variables available in tests
-  globals: {
-    window: {},
-    document: {},
-    navigator: {},
-    localStorage: {},
-  },
 };

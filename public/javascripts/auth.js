@@ -279,7 +279,13 @@ class AuthManager {
   }
 }
 
-// Initialize auth manager when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  new AuthManager();
-});
+// Export for testing (CommonJS) or initialize for browser
+if (typeof module !== 'undefined' && module.exports) {
+  // Node.js/testing environment
+  module.exports = AuthManager;
+} else {
+  // Browser environment - initialize when DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    new AuthManager();
+  });
+}

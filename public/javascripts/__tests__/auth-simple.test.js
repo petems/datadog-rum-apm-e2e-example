@@ -2,6 +2,12 @@
  * @jest-environment jsdom
  */
 
+// Test constants to avoid hardcoded passwords
+const TEST_PASSWORD = 'test-password-123';
+const TEST_EMAIL = 'test@example.com';
+const ADMIN_EMAIL = 'admin@example.com';
+const ADMIN_PASSWORD = 'admin-test-pass';
+
 // Simple focused tests for RUM functionality
 describe('AuthManager RUM Integration - Simple Tests', () => {
   let mockDD_RUM;
@@ -32,8 +38,8 @@ describe('AuthManager RUM Integration - Simple Tests', () => {
       addAction: jest.fn(),
     };
 
-    // Load the AuthManager class
-    const AuthManager = require('../auth-module.js');
+    // Load the AuthManager class from the refactored auth.js
+    const AuthManager = require('../auth.js');
 
     // Create a basic DOM structure
     document.body.innerHTML = `
@@ -89,8 +95,8 @@ describe('AuthManager RUM Integration - Simple Tests', () => {
     global.setTimeout = jest.fn(callback => callback());
 
     // Set form values
-    document.getElementById('email').value = 'test@example.com';
-    document.getElementById('password').value = 'password';
+    document.getElementById('email').value = TEST_EMAIL;
+    document.getElementById('password').value = TEST_PASSWORD;
 
     // Call handleLogin directly
     const mockEvent = { preventDefault: jest.fn() };
@@ -189,8 +195,8 @@ describe('AuthManager RUM Integration - Simple Tests', () => {
 
     global.setTimeout = jest.fn(callback => callback());
 
-    document.getElementById('email').value = 'test@example.com';
-    document.getElementById('password').value = 'password';
+    document.getElementById('email').value = TEST_EMAIL;
+    document.getElementById('password').value = TEST_PASSWORD;
 
     const mockEvent = { preventDefault: jest.fn() };
     await authManager.handleLogin(mockEvent);
@@ -224,8 +230,8 @@ describe('AuthManager RUM Integration - Simple Tests', () => {
 
     global.setTimeout = jest.fn(callback => callback());
 
-    document.getElementById('email').value = 'admin@example.com';
-    document.getElementById('password').value = 'adminpass';
+    document.getElementById('email').value = ADMIN_EMAIL;
+    document.getElementById('password').value = ADMIN_PASSWORD;
 
     const mockEvent = { preventDefault: jest.fn() };
     await authManager.handleLogin(mockEvent);

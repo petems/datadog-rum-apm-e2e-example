@@ -33,8 +33,4 @@ beforeEach(() => {
 });
 
 // Bootstrap CSS classes work natively in JSDOM, no need to mock
-
-// Ensure DOM methods return consistent values for testing
-HTMLElement.prototype.prepend = jest.fn();
-HTMLElement.prototype.querySelector = jest.fn();
-HTMLElement.prototype.querySelectorAll = jest.fn(() => []);
+// DOM methods work natively in JSDOM, no need to mock them
