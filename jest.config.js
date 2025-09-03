@@ -5,8 +5,8 @@ module.exports = {
   // Test patterns
   testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
 
-  // Exclude Playwright tests from Jest
-  testPathIgnorePatterns: ['/node_modules/', '/test/e2e/'],
+  // Exclude Playwright tests and client-side tests from main Jest
+  testPathIgnorePatterns: ['/node_modules/', '/test/e2e/', '/public/'],
 
   // Coverage configuration
   collectCoverage: true,

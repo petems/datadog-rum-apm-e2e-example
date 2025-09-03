@@ -1,4 +1,5 @@
-// Authentication JavaScript for Datablog
+// Modular version of auth.js for testing
+// This is a copy of auth.js but structured as a proper CommonJS module
 
 class AuthManager {
   constructor() {
@@ -279,7 +280,4 @@ class AuthManager {
   }
 }
 
-// Initialize auth manager when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  new AuthManager();
-});
+module.exports = AuthManager;
