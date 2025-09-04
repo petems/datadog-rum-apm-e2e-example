@@ -16,6 +16,7 @@ const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
 const logger = require('./logger');
+const fs = require('fs');
 // Avoid establishing DB connections during unit tests to prevent open handles
 if (process.env.NODE_ENV !== 'test') {
   require('./mongo');
@@ -28,13 +29,6 @@ const app = express();
 
 // Hide implementation details from response headers
 app.disable('x-powered-by');
-
-// View engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-
-// FIXME how does express use loggers
-//app.use(logger('datablog'));
 
 // Handlers for JSON and URL Encodings
 app.use(express.json());
@@ -102,38 +96,6 @@ app.use(
   })
 );
 
-// Robots.txt and sitemap.xml with dynamic base URL
-function inferBaseUrl(req) {
-  const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'http')
-    .split(',')[0]
-    .trim();
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  const envBase = process.env.PUBLIC_BASE_URL || process.env.SITE_BASE_URL;
-  if (envBase) {
-    return envBase.replace(/\/$/, '');
-  }
-  return `${proto}://${host}`;
-}
-
-app.get('/robots.txt', (req, res) => {
-  const base = inferBaseUrl(req);
-  res
-    .type('text/plain')
-    .send(`User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n`);
-});
-
-app.get('/sitemap.xml', (req, res) => {
-  const base = inferBaseUrl(req);
-  res
-    .type('application/xml')
-    .send(
-      `<?xml version="1.0" encoding="UTF-8"?>\n` +
-        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
-        `  <url><loc>${base}/</loc></url>\n` +
-        `</urlset>\n`
-    );
-});
-
 // Health check endpoint
 app.get('/healthz', (req, res) => {
   const healthStatus = {
@@ -148,43 +110,32 @@ app.get('/healthz', (req, res) => {
   res.status(200).json(healthStatus);
 });
 
-// Cache policy: disable caching for dynamic pages
-app.use((req, res, next) => {
-  res.setHeader(
-    'Cache-Control',
-    'no-store, no-cache, must-revalidate, private'
-  );
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  next();
-});
-
-// Create public path containing images, javascript, and stylesheets
-app.use(
-  express.static(path.join(__dirname, 'public'), {
-    setHeaders: (res, p) => {
-      if (
-        /(\.js|\.css|\.png|\.jpg|\.jpeg|\.gif|\.svg|\.ico|\.woff2?|\.ttf|\.eot)$/i.test(
-          p
-        )
-      ) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      }
-    },
-  })
-);
-
-// Routers for each page
-const indexRouter = require('./routes/index');
-const pagesRouter = require('./routes/pages');
+// Serve API routes
 const apiRouter = require('./routes/api');
 const apiPagesRouter = require('./routes/api-pages');
 const authRouter = require('./routes/auth');
-app.use('/', indexRouter);
-app.use('/page', pagesRouter);
 app.use('/api/page', apiRouter);
 app.use('/api/pages', apiPagesRouter);
 app.use('/api/auth', authRouter);
+
+// Serve React frontend
+app.use(express.static(path.join(__dirname, 'frontend/dist')));
+
+app.get('*', (req, res, next) => {
+  if (req.originalUrl.startsWith('/api')) {
+    return next();
+  }
+  try {
+    const htmlPath = path.join(__dirname, 'frontend/dist/index.html');
+    let html = fs.readFileSync(htmlPath, 'utf8');
+    const rumConfig = `<script nonce="${res.locals.cspNonce}">window.DD_RUM_CONFIG = ${JSON.stringify(rum)}</script>`;
+    html = html.replace('</head>', `${rumConfig}</head>`);
+    res.send(html);
+  } catch (error) {
+    logger.error(error, 'Error serving React app');
+    next(error);
+  }
+});
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -195,16 +146,6 @@ app.use(function (req, res, next) {
 app.use(function (err, req, res, _next) {
   res.locals.message = err.message;
   res.locals.error = err;
-
-  // TODO: Why does the error handling cause posting a new page to fail
-  // Workaround for this getting thrown from manage-pages.getNextPageId
-  if (
-    err.name === 'NotFoundError' &&
-    (req.path === '/page' || req.path === '/page/')
-  ) {
-    logger.info('Mongoose NotFoundError, skipping');
-    return;
-  }
 
   // Determine status and log with stack trace
   const statusCode = err.status || 500;
@@ -226,17 +167,12 @@ app.use(function (err, req, res, _next) {
     logger.warn(logPayload, 'Request error');
   }
 
-  // In tests, avoid rendering EJS and return JSON for simplicity
-  if (process.env.NODE_ENV === 'test') {
-    res.status(statusCode).json({ statusCode, message: err.message });
-    return;
-  }
-
-  // Render the error page without exposing stack to users
-  res.status(statusCode);
-  const errorDetails = { statusCode, message: err.message };
-  res.render('error', { ...errorDetails, rum });
-  return;
+  res.status(statusCode).json({
+    statusCode,
+    message: err.message,
+    // only include stack in development
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  });
 });
 
 module.exports = app;
