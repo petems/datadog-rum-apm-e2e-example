@@ -45,6 +45,15 @@ class AuthManager {
       if (response.ok) {
         const data = await response.json();
         this.showLoggedInState(data.user);
+        // Set user context for RUM
+        if (window.DD_RUM && data.user) {
+          window.DD_RUM.setUser({
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.email,
+            role: data.user.role,
+          });
+        }
         if (data.user && data.user.role === 'admin') {
           this.showAdminBanner();
         }
@@ -101,7 +110,16 @@ class AuthManager {
 
         // Track login event with Datadog RUM
         if (window.DD_RUM) {
-          window.DD_RUM.addAction('user_login', { email: data.user.email });
+          window.DD_RUM.setUser({
+            id: data.user.id,
+            email: data.user.email,
+            name: data.user.email, // Use email as display name
+            role: data.user.role,
+          });
+          window.DD_RUM.addAction('user_login', {
+            email: data.user.email,
+            role: data.user.role,
+          });
         }
       } else {
         this.showError(data.message || 'Login failed');
@@ -143,13 +161,14 @@ class AuthManager {
   }
 
   logout() {
-    this.accessToken = null;
-    localStorage.removeItem('accessToken');
-
-    // Track logout event with Datadog RUM
+    // Clear user context in RUM before local cleanup
     if (window.DD_RUM) {
+      window.DD_RUM.clearUser();
       window.DD_RUM.addAction('user_logout');
     }
+
+    this.accessToken = null;
+    localStorage.removeItem('accessToken');
 
     // Refresh the page to show logged-out state with server-side content
     window.location.reload();
@@ -260,7 +279,13 @@ class AuthManager {
   }
 }
 
-// Initialize auth manager when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  new AuthManager();
-});
+// Export for testing (CommonJS) or initialize for browser
+if (typeof module !== 'undefined' && module.exports) {
+  // Node.js/testing environment
+  module.exports = AuthManager;
+} else {
+  // Browser environment - initialize when DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    new AuthManager();
+  });
+}
