@@ -70,5 +70,6 @@ app.get('*', (req, res) => {
 });
 
 app.listen(port, () => {
+  // eslint-disable-next-line no-console
   console.log(`datablog-ui server listening on port ${port}`);
 });
