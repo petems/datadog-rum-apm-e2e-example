@@ -73,6 +73,7 @@ app.use(
           (req, res) => `'nonce-${res.locals.cspNonce}'`,
           'https://www.datadoghq-browser-agent.com',
         ],
+        'worker-src': ["'self'", 'blob:'],
         // Allow inline styles for third-party SDKs like Datadog RUM
         // We keep scripts nonce-based and disallow unsafe-inline for scripts
         'style-src': ["'self'", "'unsafe-inline'"],
@@ -86,11 +87,12 @@ app.use(
           'https://*.datadoghq.com',
           'https://*.datadoghq.eu',
           'https://*.datad0g.com',
+          'https://browser-intake-datadoghq.com',
         ],
         'frame-ancestors': ["'self'"],
       },
     },
-    crossOriginEmbedderPolicy: true,
+    crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: { policy: 'same-origin' },
     crossOriginResourcePolicy: { policy: 'same-origin' },
     referrerPolicy: { policy: 'no-referrer' },

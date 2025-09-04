@@ -162,7 +162,7 @@ class AuthManager {
 
   logout() {
     // Clear user context in RUM before local cleanup
-    if (window.DD_RUM) {
+    if (window.DD_RUM && typeof window.DD_RUM.clearUser === 'function') {
       window.DD_RUM.clearUser();
       window.DD_RUM.addAction('user_logout');
     }

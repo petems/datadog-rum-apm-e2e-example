@@ -1,0 +1,17 @@
+<!-- DATADOG RUM -->
+<script src="https://www.datadoghq-browser-agent.com/us1/v6/datadog-rum.js" type="text/javascript" crossorigin="anonymous"></script>
+<script nonce="<%= cspNonce %>">
+    window.DD_RUM && window.DD_RUM.init({
+        clientToken: '<%= rum.clientToken %>',
+        applicationId: '<%= rum.applicationId %>',
+        site: 'datadoghq.com',
+        env: '<%= rum.env %>',
+        service: '<%= rum.service %>',
+        version: '<%= rum.version %>',
+        allowedTracingOrigins: [/http:\/\/localhost:3000/],
+        trackInteractions: true,
+        sessionSampleRate: 100,
+        sessionReplaySampleRate: 100,
+        enablePrivacyForActionName: true
+    });
+</script>
