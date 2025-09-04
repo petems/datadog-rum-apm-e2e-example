@@ -1,21 +1,6 @@
 <html ng-app="Datablog">
     <head>
-        <!-- DATADOG RUM -->
-        <script
-            src="https://www.datadoghq-browser-agent.com/datadog-rum-us.js"
-            type="text/javascript"
-            integrity="sha384-IYjwA4SyYSuGWv/BUWgCzXkRRJ+i9YhzDBbJGKUe+UKfzTEs8w/hgfU9ubdqzux5"
-            crossorigin="anonymous">
-        </script>
-        <script nonce="<%= cspNonce %>">
-            window.DD_RUM && window.DD_RUM.init({
-                clientToken: '<%= rum.clientToken %>',
-                applicationId: '<%= rum.applicationId %>',
-                env: '<%= rum.env %>',
-                service: '<%= rum.service %>',
-                version: '<%= rum.version %>'
-            });
-        </script>
+        <%- include('partials/rum-loader') %>
 
         <!-- ANGULAR & CSS -->
         <script src="/vendor/angular.min.js"></script>
