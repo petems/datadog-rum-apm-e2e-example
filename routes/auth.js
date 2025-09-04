@@ -20,14 +20,21 @@ const { setRefreshCookie, clearRefreshCookie } = require('../utils/cookies');
 const authenticate = require('../middlewares/authenticate');
 const authorize = require('../middlewares/authorize');
 const { authLimiter } = require('../middlewares/rateLimiter');
+const traceLogger = require('../middlewares/traceLogger');
 
 const router = express.Router();
 
 router.use(cookieParser());
 router.use(helmet());
+
+// Log incoming trace headers for debugging RUM->APM correlation
+router.use(traceLogger);
 router.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN || [
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ],
     credentials: true,
   })
 );
@@ -247,6 +254,13 @@ router.post(
 
 // GET /api/auth/me
 router.get('/me', authLimiter, authenticate, async (req, res) => {
+  return res.status(200).json({
+    user: { id: req.user.id, email: req.user.email, role: req.user.role },
+  });
+});
+
+// GET /api/auth/me - Get current user info
+router.get('/me', authenticate, (req, res) => {
   return res.status(200).json({
     user: { id: req.user.id, email: req.user.email, role: req.user.role },
   });

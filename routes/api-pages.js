@@ -4,8 +4,10 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
 const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 const managePages = require('../controllers/manage-pages');
 const authenticate = require('../middlewares/authenticate');
+const traceLogger = require('../middlewares/traceLogger');
 
 // Reasonable content size limits to guard payloads
 const MAX_TITLE_LENGTH = 200;
@@ -13,6 +15,20 @@ const MAX_CONTENT_LENGTH = 5000;
 
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
+
+// Log incoming trace headers for debugging RUM->APM correlation
+router.use(traceLogger);
+
+// CORS configuration
+router.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || [
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ],
+    credentials: true,
+  })
+);
 
 // Apply rate limiting to API pages (100 requests per 15 minutes per IP)
 const limiter = rateLimit({

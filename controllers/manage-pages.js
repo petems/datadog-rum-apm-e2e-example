@@ -98,7 +98,7 @@ let updatePage = async (pageModel, body, user) => {
 
   const curDate = Date.now();
   pageModel.title = body.title;
-  pageModel.body = body.body;
+  pageModel.body = body.content || body.body; // Support both 'content' and 'body' fields
   pageModel.updatedDate = curDate;
 
   logger.info({ page: pageModel }, `Updating page by user: ${user.email}`);

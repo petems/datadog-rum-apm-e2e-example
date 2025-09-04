@@ -47,8 +47,8 @@ module.exports = [
       'regexp/no-useless-quantifier': 'warn',
     },
   },
-  // Ignore linting for vendored/minified third-party bundles
-  { ignores: ['public/vendor/**'] },
+  // Ignore linting for vendored/minified third-party bundles and client build artifacts
+  { ignores: ['public/vendor/**', 'client/**', 'dist/**'] },
   {
     files: ['**/*.test.js', '**/*.spec.js', '**/test/**/*.js'],
     rules: {
