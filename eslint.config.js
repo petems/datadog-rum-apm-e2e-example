@@ -48,7 +48,7 @@ module.exports = [
     },
   },
   // Ignore linting for vendored/minified third-party bundles
-  { ignores: ['public/vendor/**'] },
+  { ignores: ['public/vendor/**', 'datablog-ui/public/vendor/**', 'datablog-ui/views/**', 'datablog-api/node_modules/**'] },
   {
     files: ['**/*.test.js', '**/*.spec.js', '**/test/**/*.js'],
     rules: {
