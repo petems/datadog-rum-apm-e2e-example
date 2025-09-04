@@ -92,6 +92,9 @@ app.use(
         'frame-ancestors': ["'self'"],
       },
     },
+    // COEP disabled to support Datadog RUM v6 dynamic chunk loading
+    // RUM v6 uses dynamic imports for features like Session Replay which require
+    // cross-origin resource sharing that conflicts with require-corp policy
     crossOriginEmbedderPolicy: false,
     crossOriginOpenerPolicy: { policy: 'same-origin' },
     crossOriginResourcePolicy: { policy: 'same-origin' },

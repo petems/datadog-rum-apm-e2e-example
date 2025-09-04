@@ -31,6 +31,18 @@ class AuthManager {
     }
   }
 
+  // Helper method to set RUM user context
+  _setRumUser(user) {
+    if (window.DD_RUM && user) {
+      window.DD_RUM.setUser({
+        id: user.id,
+        email: user.email,
+        name: user.email, // Use email as display name
+        role: user.role,
+      });
+    }
+  }
+
   async validateToken() {
     try {
       const response = await fetch('/api/auth/me', {
@@ -46,14 +58,7 @@ class AuthManager {
         const data = await response.json();
         this.showLoggedInState(data.user);
         // Set user context for RUM
-        if (window.DD_RUM && data.user) {
-          window.DD_RUM.setUser({
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.email,
-            role: data.user.role,
-          });
-        }
+        this._setRumUser(data.user);
         if (data.user && data.user.role === 'admin') {
           this.showAdminBanner();
         }
@@ -109,13 +114,8 @@ class AuthManager {
         }, 1000);
 
         // Track login event with Datadog RUM
+        this._setRumUser(data.user);
         if (window.DD_RUM) {
-          window.DD_RUM.setUser({
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.email, // Use email as display name
-            role: data.user.role,
-          });
           window.DD_RUM.addAction('user_login', {
             email: data.user.email,
             role: data.user.role,
