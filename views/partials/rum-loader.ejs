@@ -1,3 +1,7 @@
+<!-- FAVICON -->
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.svg" type="image/x-icon">
+
 <!-- DATADOG RUM -->
 <script src="https://www.datadoghq-browser-agent.com/us1/v6/datadog-rum.js" type="text/javascript" crossorigin="anonymous"></script>
 <script nonce="<%= cspNonce %>">
@@ -10,8 +14,14 @@
         version: '<%= rum.version %>',
         allowedTracingOrigins: [/http:\/\/localhost:3000/],
         trackInteractions: true,
+        trackViewsManually: false,
+        trackUserInteractions: true,
+        trackResources: true,
+        trackLongTasks: true,
+        defaultPrivacyLevel: 'mask-user-input',
         sessionSampleRate: 100,
         sessionReplaySampleRate: 100,
-        enablePrivacyForActionName: true
+        enablePrivacyForActionName: true,
+        silentMultipleInit: true
     });
 </script>
