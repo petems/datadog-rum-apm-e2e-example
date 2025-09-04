@@ -1,0 +1,75 @@
+{
+  "name": "datablog-api",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:backend": "jest --selectProjects=backend",
+    "test:frontend": "jest --selectProjects=frontend",
+    "test:backend:watch": "jest --selectProjects=backend --watch",
+    "test:frontend:watch": "jest --selectProjects=frontend --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "lint": "eslint .",
+    "lint:ci": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,json,md}\"",
+    "screenshot": "node scripts/screenshot.js",
+    "seed": "node scripts/seed-data.js",
+    "prepare": "husky install || true",
+    "audit": "npm audit --prod --audit-level=high",
+    "audit:all": "npm audit --audit-level=moderate",
+    "audit:ci": "npm audit --prod --audit-level=high --json"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix --cache --no-warn-ignored --max-warnings=0",
+      "prettier --write",
+      "jest -c jest.lintstaged.config.js --findRelatedTests --bail --passWithNoTests"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^2.2.0",
+    "bunyan": "^1.8.15",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "csrf-csrf": "^4.0.3",
+    "dd-trace": "^5.28.0",
+    "debug": "~4.4.1",
+    "ejs": "^3.1.10",
+    "escape-html": "^1.0.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.0.1",
+    "helmet": "^7.2.0",
+    "hot-shots": "^11.2.0",
+    "http-errors": "~2.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@happy-dom/jest-environment": "^18.0.1",
+    "@playwright/test": "^1.40.0",
+    "eslint": "^9.34.0",
+    "eslint-plugin-regexp": "^2.10.0",
+    "happy-dom": "^18.0.1",
+    "husky": "^9.1.7",
+    "jest": "^30.1.1",
+    "lint-staged": "^16.1.5",
+    "prettier": "^3.1.0",
+    "supertest": "^7.1.4"
+  },
+  "engines": {
+    "node": ">=22.18.0",
+    "npm": ">=10.0.0"
+  }
+}

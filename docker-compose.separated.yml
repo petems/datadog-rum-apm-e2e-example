@@ -1,0 +1,97 @@
+services:
+  ddagent:
+    image: datadog/agent
+    container_name: datadog-agent
+    env_file: .env
+    environment:
+      - DD_APM_ENABLED=true
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_LOG_LEVEL=debug
+    volumes: 
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
+    ports:
+      - "8126:8126"
+      - "8125:8125"
+
+  datablog-api:
+    container_name: datablog-api
+    restart: always
+    build: 
+      context: ./datablog-api
+    env_file: .env
+    labels: 
+       com.datadoghq.tags.env: development
+       com.datadoghq.tags.service: datablog-api
+       com.datadoghq.tags.version: "2.0.0"
+       com.datadoghq.ad.logs: '[{"source": "node", "service": "datablog-api"}]'
+    environment:
+      - DD_AGENT_HOST=datadog-agent
+      - DOCKER=true
+      - DD_ENV=development
+      - DD_SERVICE=datablog-api
+      - DD_VERSION=2.0.0
+      - FRONTEND_URL=http://localhost:3000
+      - NODE_ENV=production
+    ports:
+      - "3001:3001"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ddagent:
+        condition: service_started
+    networks:
+      - datablog-network
+
+  datablog-ui:
+    container_name: datablog-ui
+    restart: always
+    build: 
+      context: ./datablog-ui
+    env_file: .env
+    labels: 
+       com.datadoghq.tags.env: development
+       com.datadoghq.tags.service: datablog-ui
+       com.datadoghq.tags.version: "2.0.0"
+       com.datadoghq.ad.logs: '[{"source": "node", "service": "datablog-ui"}]'
+    environment:
+      - DD_ENV=development
+      - DD_SERVICE=datablog-ui
+      - DD_VERSION=2.0.0
+      - API_BASE_URL=http://datablog-api:3001
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - datablog-api
+    networks:
+      - datablog-network
+
+  mongo:
+    container_name: mongo
+    image: mongo:7.0
+    labels: 
+       com.datadoghq.tags.env: development
+       com.datadoghq.tags.service: datablog-mongo
+    # Allow optional runtime tuning via MONGO_OPTS, e.g. "--nojournal --wiredTigerCacheSizeGB=0.25"
+    command: bash -lc "exec mongod --bind_ip_all ${MONGO_OPTS}"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({ ping: 1 }).ok' || mongo --eval 'db.runCommand({ ping: 1 }).ok'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    # Persistent data to avoid filling container layer and immediate shutdowns
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - datablog-network
+
+volumes:
+  mongo-data:
+
+networks:
+  datablog-network:
+    driver: bridge

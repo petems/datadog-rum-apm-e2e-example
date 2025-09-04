@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- DATADOG RUM INITIALIZATION -->
+    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/us1/v4/datadog-rum.js"></script>
+    <script>
+        // RUM configuration
+        const rumConfig = {
+            clientToken: window.DD_CLIENT_TOKEN || 'pub123456789',
+            applicationId: window.DD_APPLICATION_ID || 'app123456789',
+            env: window.DD_ENV || 'development',
+            service: window.DD_SERVICE || 'datablog-ui',
+            version: window.DD_VERSION || '2.0.0',
+            sessionSampleRate: 100,
+            sessionReplaySampleRate: 20,
+            trackUserInteractions: true,
+            trackResources: true,
+            trackLongTasks: true,
+            allowedTracingOrigins: [
+                window.API_BASE_URL || 'http://localhost:3001',
+                'http://localhost:3001',
+                /^http:\/\/datablog-api:3001/
+            ]
+        };
+
+        window.DD_RUM && DD_RUM.init(rumConfig);
+    </script>
+
+    <!-- DATADOG BROWSER LOG COLLECTION -->
+    <script type="text/javascript" src="https://www.datadoghq-browser-agent.com/datadog-logs-us.js"></script>
+    <script>
+        window.DD_LOGS && DD_LOGS.init({
+            clientToken: window.DD_CLIENT_TOKEN || 'pub123456789',
+            forwardErrorsToLogs: true,
+            env: window.DD_ENV || 'development',
+            service: window.DD_SERVICE || 'datablog-ui',
+            version: window.DD_VERSION || '2.0.0',
+            sampleRate: 100
+        });
+        console.error("Test console error message");
+        window.DD_LOGS && DD_LOGS.logger.info('Example DD_LOGGER message', {custom: { name: 'example json', id: 123 }});
+    </script>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="/vendor/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/stylesheets/style.css" type="text/css" rel="stylesheet">
+    
+    <title>Welcome to Datablog</title>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand text-gradient" href="/">
+                📝 Datablog
+            </a>
+            <div class="navbar-nav ms-auto">
+                <div id="auth-nav">
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#loginModal" id="loginBtn">
+                        🔐 Login
+                    </button>
+                    <div id="userMenu" class="d-none">
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <span id="userEmail"></span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><button class="dropdown-item" id="logoutBtn">Logout</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                    <div id="loginError" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="hero-section text-center mb-5">
+            <h1 class="display-4 text-gradient">📝 Welcome to Datablog</h1>
+            <p class="lead text-muted">A simple blog platform with Datadog RUM and APM integration</p>
+            <div class="mt-4">
+                <button id="createPageBtn" class="btn btn-primary btn-lg me-3 d-none">
+                    ✍️ Create New Page
+                </button>
+                <a href="#pages" class="btn btn-outline-primary btn-lg">
+                    📚 View All Pages
+                </a>
+            </div>
+        </div>
+
+        <!-- Pages List -->
+        <div id="pages-section">
+            <h2 class="mb-4">📚 Blog Pages</h2>
+            <div id="pages-loading" class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2 text-muted">Loading pages...</p>
+            </div>
+            <div id="pages-container" class="d-none">
+                <!-- Pages will be loaded here dynamically -->
+            </div>
+            <div id="pages-error" class="alert alert-danger d-none">
+                Failed to load pages. Please try again later.
+            </div>
+        </div>
+
+        <!-- Create Page Modal -->
+        <div class="modal fade" id="createPageModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create New Page</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="createPageForm">
+                            <div class="mb-3">
+                                <label for="pageTitle" class="form-label">Title</label>
+                                <input type="text" class="form-control" id="pageTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="pageBody" class="form-label">Content</label>
+                                <textarea class="form-control" id="pageBody" rows="8" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Create Page</button>
+                        </form>
+                        <div id="createPageError" class="alert alert-danger mt-3 d-none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/vendor/jquery-3.5.1.min.js"></script>
+    <script src="/vendor/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuration
+        const API_BASE_URL = window.API_BASE_URL || 'http://localhost:3001';
+        let currentUser = null;
+
+        // Authentication functions
+        async function login(email, password) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Login failed');
+                }
+
+                const user = await response.json();
+                currentUser = user;
+                updateUI();
+                bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
+                return user;
+            } catch (error) {
+                console.error('Login error:', error);
+                throw error;
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch(`${API_BASE_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                currentUser = null;
+                updateUI();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        // Pages functions
+        async function loadPages() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/pages`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load pages');
+                }
+
+                const pages = await response.json();
+                displayPages(pages);
+            } catch (error) {
+                console.error('Error loading pages:', error);
+                document.getElementById('pages-loading').classList.add('d-none');
+                document.getElementById('pages-error').classList.remove('d-none');
+            }
+        }
+
+        function displayPages(pages) {
+            const container = document.getElementById('pages-container');
+            const loading = document.getElementById('pages-loading');
+            
+            loading.classList.add('d-none');
+            container.classList.remove('d-none');
+            
+            if (pages.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No pages found. Create your first page!</p>';
+                return;
+            }
+
+            container.innerHTML = pages.map(page => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">${escapeHtml(page.title)}</h5>
+                        <p class="card-text">${escapeHtml(page.body.substring(0, 200))}${page.body.length > 200 ? '...' : ''}</p>
+                        <small class="text-muted">Created: ${new Date(page.created).toLocaleDateString()}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function createPage(title, body) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/page`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ title, body })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to create page');
+                }
+
+                const page = await response.json();
+                bootstrap.Modal.getInstance(document.getElementById('createPageModal')).hide();
+                document.getElementById('createPageForm').reset();
+                loadPages(); // Reload pages
+                return page;
+            } catch (error) {
+                console.error('Create page error:', error);
+                throw error;
+            }
+        }
+
+        // UI functions
+        function updateUI() {
+            const loginBtn = document.getElementById('loginBtn');
+            const userMenu = document.getElementById('userMenu');
+            const userEmail = document.getElementById('userEmail');
+            const createPageBtn = document.getElementById('createPageBtn');
+
+            if (currentUser) {
+                loginBtn.classList.add('d-none');
+                userMenu.classList.remove('d-none');
+                createPageBtn.classList.remove('d-none');
+                userEmail.textContent = currentUser.email;
+            } else {
+                loginBtn.classList.remove('d-none');
+                userMenu.classList.add('d-none');
+                createPageBtn.classList.add('d-none');
+                userEmail.textContent = '';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event listeners
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('loginError');
+
+            try {
+                await login(email, password);
+                errorEl.classList.add('d-none');
+            } catch (error) {
+                errorEl.textContent = error.message;
+                errorEl.classList.remove('d-none');
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        document.getElementById('createPageBtn').addEventListener('click', () => {
+            new bootstrap.Modal(document.getElementById('createPageModal')).show();
+        });
+
+        document.getElementById('createPageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('pageTitle').value;
+            const body = document.getElementById('pageBody').value;
+            const errorEl = document.getElementById('createPageError');
+
+            try {
+                await createPage(title, body);
+                errorEl.classList.add('d-none');
+            } catch (error) {
+                errorEl.textContent = error.message;
+                errorEl.classList.remove('d-none');
+            }
+        });
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPages();
+        });
+    </script>
+</body>
+</html>
