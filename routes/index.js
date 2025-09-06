@@ -12,28 +12,18 @@ const indexRateLimit = rateLimit({
   legacyHeaders: false,
 });
 
-/* GET home page - redirect to React SPA */
+/* GET home page - serve static React build */
 router.get('/', indexRateLimit, function (req, res) {
-  logger.info(`Request for index page: ${req.url}, redirecting to React SPA`);
-  // Redirect to React development server or serve static React build
-  if (process.env.NODE_ENV === 'development') {
-    res.redirect('http://localhost:5173');
-  } else {
-    // In production, serve static React build
-    res.sendFile('index.html', { root: './client/dist' });
-  }
+  logger.info(`Request for index page: ${req.url}, serving React SPA`);
+  // Serve static React build
+  res.sendFile('index.html', { root: './client/dist' });
 });
 
-// Also handle /v1 route - redirect to React SPA
+// Also handle /v1 route - serve static React build
 router.get('/v1', indexRateLimit, function (req, res) {
-  logger.info(`Request for v1 page: ${req.url}, redirecting to React SPA`);
-  // Redirect to React development server or serve static React build
-  if (process.env.NODE_ENV === 'development') {
-    res.redirect('http://localhost:5173');
-  } else {
-    // In production, serve static React build
-    res.sendFile('index.html', { root: './client/dist' });
-  }
+  logger.info(`Request for v1 page: ${req.url}, serving React SPA`);
+  // Serve static React build
+  res.sendFile('index.html', { root: './client/dist' });
 });
 
 module.exports = router;
