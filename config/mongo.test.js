@@ -13,6 +13,8 @@ describe('Mongo Configuration', () => {
   it('should use localhost URI by default', () => {
     delete process.env.DOCKER;
     delete process.env.MONGODB_URI;
+    delete process.env.NODE_ENV;
+    delete process.env.PLAYWRIGHT_TEST;
 
     const mongoConfig = require('./mongo');
 
@@ -24,6 +26,8 @@ describe('Mongo Configuration', () => {
 
   it('should use custom URI when MONGODB_URI env is set to mongo service', () => {
     process.env.MONGODB_URI = 'mongodb://mongo:27017';
+    delete process.env.NODE_ENV;
+    delete process.env.PLAYWRIGHT_TEST;
 
     const mongoConfig = require('./mongo');
 
@@ -34,6 +38,9 @@ describe('Mongo Configuration', () => {
   });
 
   it('should have correct MongoDB connection options', () => {
+    delete process.env.NODE_ENV;
+    delete process.env.PLAYWRIGHT_TEST;
+
     const mongoConfig = require('./mongo');
 
     expect(mongoConfig.options.dbName).toBe('datablog');
