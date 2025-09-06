@@ -1,7 +1,7 @@
 
 services:
-  ddagent:
-    image: datadog/agent
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:latest
     container_name: datadog-agent
     env_file: .env
     environment:
@@ -14,7 +14,7 @@ services:
     ports:
       - "8126:8126"
       - "8125:8125"
-  app:
+  datablog:
     container_name: datablog
     restart: always
     build: .
@@ -27,15 +27,13 @@ services:
     environment:
       - DD_AGENT_HOST=datadog-agent
       - DOCKER=true
-      - DD_ENV=development
-      - DD_SERVICE=datablog
-      - DD_VERSION=2.0.0
+      - DD_TRACE_AGENT_PORT=8126
     ports:
       - "3000:3000"
     depends_on:
       mongo:
         condition: service_healthy
-      ddagent:
+      datadog-agent:
         condition: service_started
   mongo:
     container_name: mongo

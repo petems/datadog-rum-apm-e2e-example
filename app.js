@@ -9,7 +9,7 @@ if (process.env.NODE_ENV !== 'test') {
     // debug: true
   });
 }
-const rum = require('./config/rum');
+// const rum = require('./config/rum');
 
 // Basic imports
 const createError = require('http-errors');
@@ -174,17 +174,32 @@ app.use(
   })
 );
 
-// Routers for each page
-const indexRouter = require('./routes/index');
-const pagesRouter = require('./routes/pages');
+// API Routers only - EJS routes disabled for SPA
 const apiRouter = require('./routes/api');
 const apiPagesRouter = require('./routes/api-pages');
 const authRouter = require('./routes/auth');
-app.use('/', indexRouter);
-app.use('/page', pagesRouter);
 app.use('/api/page', apiRouter);
 app.use('/api/pages', apiPagesRouter);
 app.use('/api/auth', authRouter);
+
+// Serve SPA static files and handle client-side routing fallback (only in production)
+if (process.env.NODE_ENV !== 'test') {
+  const clientDist = path.join(__dirname, 'client', 'dist');
+  app.use(express.static(clientDist));
+
+  // Catch-all middleware: send back React's index.html file for non-API routes
+  app.use((req, res, next) => {
+    // Skip API routes and let them be handled by 404 handler
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    // Only handle GET requests for the SPA
+    if (req.method === 'GET') {
+      return res.sendFile(path.join(clientDist, 'index.html'));
+    }
+    return next();
+  });
+}
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -226,16 +241,8 @@ app.use(function (err, req, res, _next) {
     logger.warn(logPayload, 'Request error');
   }
 
-  // In tests, avoid rendering EJS and return JSON for simplicity
-  if (process.env.NODE_ENV === 'test') {
-    res.status(statusCode).json({ statusCode, message: err.message });
-    return;
-  }
-
-  // Render the error page without exposing stack to users
-  res.status(statusCode);
-  const errorDetails = { statusCode, message: err.message };
-  res.render('error', { ...errorDetails, rum });
+  // Return JSON error for API requests and SPA
+  res.status(statusCode).json({ statusCode, message: err.message });
   return;
 });
 

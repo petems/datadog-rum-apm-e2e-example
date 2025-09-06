@@ -20,14 +20,21 @@ const { setRefreshCookie, clearRefreshCookie } = require('../utils/cookies');
 const authenticate = require('../middlewares/authenticate');
 const authorize = require('../middlewares/authorize');
 const { authLimiter } = require('../middlewares/rateLimiter');
+const traceLogger = require('../middlewares/traceLogger');
 
 const router = express.Router();
 
 router.use(cookieParser());
 router.use(helmet());
+
+// Log incoming trace headers for debugging RUM->APM correlation
+router.use(traceLogger);
 router.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN || [
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ],
     credentials: true,
   })
 );
