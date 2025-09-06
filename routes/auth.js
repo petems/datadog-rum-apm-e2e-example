@@ -259,13 +259,6 @@ router.get('/me', authLimiter, authenticate, async (req, res) => {
   });
 });
 
-// GET /api/auth/me - Get current user info
-router.get('/me', authenticate, (req, res) => {
-  return res.status(200).json({
-    user: { id: req.user.id, email: req.user.email, role: req.user.role },
-  });
-});
-
 // GET /api/protected
 router.get(
   '/protected',

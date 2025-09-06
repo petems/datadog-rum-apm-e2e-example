@@ -1,5 +1,5 @@
 # ---- client build ----
-FROM node:22-alpine AS client
+FROM node:24.7.0-bookworm-slim AS client
 WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm ci

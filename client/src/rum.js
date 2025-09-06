@@ -17,6 +17,7 @@ datadogRum.init({
   allowedTracingUrls: [
     url => url.startsWith('http://localhost'),
     url => url.startsWith('http://localhost:3000'),
+    url => new URL(url).origin === window.location.origin,
   ],
   traceSampleRate: 100,
 });
