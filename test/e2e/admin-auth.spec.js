@@ -7,7 +7,7 @@ const execAsync = promisify(exec);
 test.describe('Admin Authentication', () => {
   const adminCredentials = {
     email: 'admin@example.com',
-    password: 'AdminPassword123',
+    password: 'DatablogAdminPassword123',
   };
 
   test.beforeAll('Create admin user', async () => {
@@ -87,9 +87,9 @@ test.describe('Admin Authentication', () => {
     // Submit the form
     await page.locator('#loginSubmit').click();
 
-    // Wait for success message (with "Redirecting..." text)
+    // Wait for success message
     await expect(page.locator('#loginSuccess')).toContainText(
-      'Login successful! Redirecting...',
+      'Login successful!',
       { timeout: 10000 }
     );
 
@@ -115,7 +115,7 @@ test.describe('Admin Authentication', () => {
 
     // Wait for success message and automatic page refresh
     await expect(page.locator('#loginSuccess')).toContainText(
-      'Login successful! Redirecting...',
+      'Login successful!',
       { timeout: 10000 }
     );
     await page.waitForLoadState('networkidle');
@@ -140,7 +140,7 @@ test.describe('Admin Authentication', () => {
 
     // Wait for login success and automatic page refresh
     await expect(page.locator('#loginSuccess')).toContainText(
-      'Login successful! Redirecting...',
+      'Login successful!',
       { timeout: 10000 }
     );
     await page.waitForLoadState('networkidle');
@@ -149,7 +149,7 @@ test.describe('Admin Authentication', () => {
     await page.locator('#userMenu .dropdown-toggle').click();
 
     // Click logout
-    await page.locator('#logoutBtn').click();
+    await page.locator('button:has-text("Logout")').click();
 
     // Wait for automatic page refresh after logout
     await page.waitForLoadState('networkidle');

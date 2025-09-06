@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '../api'
 import LoginModal from './LoginModal'
+import { setRumUser, clearRumUser } from '../utils/rum'
 
 function Navigation() {
   const [user, setUser] = useState(null)
@@ -18,6 +19,8 @@ function Navigation() {
       if (response.ok) {
         const userData = await response.json()
         setUser(userData.user)
+        // Set RUM user context if user is already logged in
+        setRumUser(userData.user)
       }
     } catch (error) {
       console.error('Failed to load user:', error)
@@ -25,6 +28,9 @@ function Navigation() {
   }
 
   const handleLogout = () => {
+    // Clear RUM user context before local cleanup
+    clearRumUser()
+    
     // Clear tokens and redirect
     localStorage.removeItem('token')
     setUser(null)
