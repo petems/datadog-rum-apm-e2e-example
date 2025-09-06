@@ -74,16 +74,25 @@ app.use(
         'worker-src': ["'self'", 'blob:'],
         // Allow inline styles for third-party SDKs like Datadog RUM
         // We keep scripts nonce-based and disallow unsafe-inline for scripts
-        'style-src': ["'self'", "'unsafe-inline'"],
+        'style-src': [
+          "'self'",
+          "'unsafe-inline'",
+          'https://fonts.googleapis.com',
+        ],
         // Explicitly allow inline style elements and attributes (CSP3)
-        'style-src-elem': ["'self'", "'unsafe-inline'"],
+        'style-src-elem': [
+          "'self'",
+          "'unsafe-inline'",
+          'https://fonts.googleapis.com',
+        ],
         'style-src-attr': ["'self'", "'unsafe-inline'"],
-        'font-src': ["'self'"],
+        'font-src': ["'self'", 'https://fonts.gstatic.com'],
         'img-src': ["'self'", 'data:'],
         'connect-src': [
           "'self'",
           'https://*.datadoghq.com',
           'https://*.datadoghq.eu',
+          'https://fonts.googleapis.com',
           'https://*.datad0g.com',
           'https://browser-intake-datadoghq.com',
         ],
