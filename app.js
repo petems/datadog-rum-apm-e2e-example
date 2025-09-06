@@ -189,8 +189,8 @@ app.use('/api/page', apiRouter);
 app.use('/api/pages', apiPagesRouter);
 app.use('/api/auth', authRouter);
 
-// Serve SPA static files and handle client-side routing fallback (only in production)
-if (process.env.NODE_ENV !== 'test') {
+// Serve SPA static files and handle client-side routing fallback (not in unit tests)
+if (process.env.NODE_ENV !== 'test' || process.env.PLAYWRIGHT_TEST === 'true') {
   const clientDist = path.join(__dirname, 'client', 'dist');
   app.use(express.static(clientDist));
 
