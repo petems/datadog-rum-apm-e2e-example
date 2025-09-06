@@ -153,4 +153,34 @@ test.describe('Console Error Prevention', () => {
     // Verify user is logged in successfully
     await expect(page.locator('#userEmail')).toContainText('admin@example.com');
   });
+
+  test('should not have excessive console warnings', async ({ page }) => {
+    const consoleWarnings = [];
+
+    // Listen for console warnings
+    page.on('console', msg => {
+      if (msg.type() === 'warning') {
+        consoleWarnings.push(msg.text());
+      }
+    });
+
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    // Check for specific warnings that should be addressed
+    const cookieWarnings = consoleWarnings.filter(
+      warning =>
+        warning.includes('Invalid cookie header') &&
+        warning.includes('HttpOnly')
+    );
+
+    // HttpOnly cookie warnings should be minimal or handled in test setup
+    // This test documents that we're aware of these warnings and handling them
+    expect(cookieWarnings.length).toBeLessThanOrEqual(2);
+
+    // Log warnings for visibility
+    if (consoleWarnings.length > 0) {
+      console.log('Console warnings found:', consoleWarnings);
+    }
+  });
 });
