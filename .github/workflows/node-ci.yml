@@ -261,24 +261,51 @@ jobs:
           echo "Waiting for services to be ready..."
           for i in {1..90}; do
             echo "Attempt $i/90: Checking app health..."
+            
+            # Check if port 3000 is listening
+            if netstat -tuln | grep -q ":3000 "; then
+              echo "Port 3000 is listening"
+            else
+              echo "Port 3000 is not listening yet"
+            fi
+            
+            # Try to connect to the health endpoint
             if curl -fsS http://localhost:3000/healthz >/dev/null 2>&1; then
               echo "✅ App is ready and responding!"
               exit 0
             fi
+            
+            # Show container status every 10 attempts
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Container status after $i attempts:"
+              docker compose ps
+              echo "Recent datablog logs:"
+              docker compose logs --tail=20 datablog || true
+            fi
+            
             echo "⏳ App not ready yet, waiting 2 seconds..."
             sleep 2
           done
           echo "❌ App failed to start within 3 minutes"
-          echo "Docker Compose status:"
+          echo "Final Docker Compose status:"
           docker compose ps
-          echo "Datablog container logs:"
+          echo "Full datablog container logs:"
           docker compose logs datablog || true
-          echo "Mongo container logs:"
+          echo "Full mongo container logs:"
           docker compose logs mongo || true
+          echo "Full datadog-agent container logs:"
+          docker compose logs datadog-agent || true
           exit 1
 
+      - name: Seed database with test data
+        run: |
+          echo "Seeding database with test data..."
+          NODE_ENV=test MONGODB_URI=mongodb://localhost:27017/datablog node scripts/seed-data.js
+          echo "✅ Database seeded successfully"
+
       - name: Run Playwright tests
-        run: npx playwright test
+        run: timeout 600 npx playwright test
+        timeout-minutes: 15
 
       - name: List test results directory
         if: always()
