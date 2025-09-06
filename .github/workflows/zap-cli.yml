@@ -43,11 +43,30 @@ jobs:
             fi
           fi
 
-      - name: Start stack (app + mongo)
+      - name: Start stack (datablog + mongo)
         run: |
-          docker compose -f docker-compose.yml up -d --build app mongo
+          docker compose -f docker-compose.yml up -d --build mongo datadog-agent datablog
+          echo "Services started, checking status:"
+          docker compose ps
           for i in {1..60}; do
-            if curl -sf http://localhost:3000 >/dev/null; then echo "app up"; break; fi; sleep 2; done
+            echo "Attempt $i/60: Checking if datablog is ready..."
+            if curl -sf http://localhost:3000 >/dev/null; then 
+              echo "✅ datablog is up and responding!"
+              break
+            fi
+            echo "⏳ datablog not ready yet, waiting 2 seconds..."
+            sleep 2
+          done
+          if [ $i -eq 60 ]; then
+            echo "❌ datablog failed to start within 2 minutes"
+            echo "Docker Compose status:"
+            docker compose ps
+            echo "Datablog container logs:"
+            docker compose logs datablog || true
+            echo "Mongo container logs:"
+            docker compose logs mongo || true
+            exit 1
+          fi
 
       - name: ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
@@ -79,3 +98,4 @@ jobs:
         if: always()
         run: |
           docker compose -f docker-compose.yml down -v
+          echo "All services stopped"
