@@ -70,7 +70,9 @@ describe('Auth Routes', () => {
 
   test('POST /api/auth/register enforces password policy', async () => {
     const csrfRes = await agent.get('/api/auth/csrf');
+    expect(csrfRes.status).toBe(200);
     const csrfToken = csrfRes.body.csrfToken;
+    expect(csrfToken).toBeDefined();
     const res = await agent
       .post('/api/auth/register')
       .set('csrf-token', csrfToken)
@@ -81,7 +83,11 @@ describe('Auth Routes', () => {
 
   test('POST /api/auth/login returns access token and sets refresh cookie', async () => {
     const csrfRes = await agent.get('/api/auth/csrf');
+    expect(csrfRes.status).toBe(200);
+    expect(csrfRes.body).toHaveProperty('csrfToken');
     const csrfToken = csrfRes.body.csrfToken;
+    expect(csrfToken).toBeDefined();
+
     const res = await agent
       .post('/api/auth/login')
       .set('csrf-token', csrfToken)
@@ -94,7 +100,9 @@ describe('Auth Routes', () => {
 
     // Refresh should succeed and return a new access token
     const csrfRes2 = await agent.get('/api/auth/csrf');
+    expect(csrfRes2.status).toBe(200);
     const csrfToken2 = csrfRes2.body.csrfToken;
+    expect(csrfToken2).toBeDefined();
     const refreshRes = await agent
       .post('/api/auth/refresh')
       .set('csrf-token', csrfToken2);
@@ -113,7 +121,9 @@ describe('Auth Routes', () => {
 
     // Logout should invalidate refresh by bumping tokenVersion
     const csrfRes3 = await agent.get('/api/auth/csrf');
+    expect(csrfRes3.status).toBe(200);
     const csrfToken3 = csrfRes3.body.csrfToken;
+    expect(csrfToken3).toBeDefined();
     const logoutRes = await agent
       .post('/api/auth/logout')
       .set('Authorization', `Bearer ${accessToken}`)
@@ -122,7 +132,9 @@ describe('Auth Routes', () => {
 
     // Attempt refresh again should now fail with 401 due to tokenVersion mismatch
     const csrfRes4 = await agent.get('/api/auth/csrf');
+    expect(csrfRes4.status).toBe(200);
     const csrfToken4 = csrfRes4.body.csrfToken;
+    expect(csrfToken4).toBeDefined();
     const refreshRes2 = await agent
       .post('/api/auth/refresh')
       .set('csrf-token', csrfToken4);
