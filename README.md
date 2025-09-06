@@ -22,35 +22,41 @@ Application Performance Monitoring (APM).
 - **Custom Instrumentation**: Examples of manual span creation and custom metrics in RUM and APM
 - **Error Tracking**: Captures both frontend and backend errors with context
 
-## ⚠️ Caveats
+## ⚠️ Architecture Notes
 
-This example uses a simplified architecture for demonstration purposes:
+This example demonstrates a modern full-stack architecture:
 
-- **Monolithic Design**: Both frontend and backend run from the same Express.js application
-- **Server-Side Rendering**: Uses EJS templates instead of a separate frontend framework
-- **Development Focus**: Optimized for learning and demonstration rather than production use
+- **Separated Frontend & Backend**: React SPA frontend with Express.js API backend
+- **React Single Page Application**: Modern frontend built with Vite and React Router
+- **RESTful API**: Express.js serves as a dedicated API server with authentication
+- **Development Focus**: Optimized for learning RUM-APM integration concepts
 
-**Note**: In real-world applications, you would typically:
+**Architecture Benefits**:
 
-- Separate frontend (React/Vue/Angular) and backend (API) into different services
-- Use a proper frontend build process with bundling and optimization
-- Implement proper CORS configuration for cross-origin requests
-- Deploy services independently with their own scaling and monitoring
+- Clear separation of concerns between frontend and backend
+- React SPA with proper build process and optimization (Vite)
+- CORS configuration for cross-origin requests
+- Independent scaling potential for frontend and backend
+- Modern development workflow with hot reloading
 
-This simplified approach makes it easier to understand the RUM-APM integration concepts without the
-complexity of microservices architecture.
+This architecture closely mirrors real-world applications while maintaining simplicity for learning
+RUM-APM integration concepts.
 
 ## 🏗️ Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend       │    │   Database      │
-│   (RUM)         │    │   (APM)         │    │   (MongoDB)     │
+│   React SPA     │    │   Express.js    │    │   Database      │
+│   Frontend      │    │   API Server    │    │   (MongoDB)     │
+│   (RUM)         │    │   (APM)         │    │                 │
 │                 │    │                 │    │                 │
-│ • User          │───▶│ • Express.js    │───▶│ • Page Storage  │
-│   Interactions  │    │ • Custom Spans  │    │ • Collections   │
-│ • Page Views    │    │ • API Endpoints │    │                 │
-│ • Performance   │    │ • Rate Limiting │    │                 │
+│ • React Router  │───▶│ • RESTful API   │───▶│ • Page Storage  │
+│ • User Context  │    │ • Authentication│    │ • User Data     │
+│ • Performance   │    │ • Custom Spans  │    │ • Collections   │
+│ • Interactions  │    │ • Rate Limiting │    │                 │
+│                 │    │                 │    │                 │
+│ Port: 5173      │    │ Port: 3000      │    │ Port: 27017     │
+│ (Vite Dev)      │    │                 │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          └───────────────────────┼───────────────────────┘
@@ -59,8 +65,9 @@ complexity of microservices architecture.
                     │   Datadog       │
                     │   Agent         │
                     │                 │
+                    │ • RUM Data      │
+                    │ • APM Traces    │
                     │ • Metrics       │
-                    │ • Traces        │
                     │ • Logs          │
                     └─────────────────┘
 ```
@@ -140,7 +147,8 @@ complexity of microservices architecture.
    Or register via the web interface at http://localhost:3000
 
 6. **Access Application**
-   - Frontend: http://localhost:3000
+   - Frontend: http://localhost:3000 (serves React SPA)
+   - Backend API: http://localhost:3000/api
    - MongoDB: localhost:27017
    - Datadog Agent: localhost:8126 (APM), localhost:8125 (StatsD)
 
@@ -155,7 +163,11 @@ complexity of microservices architecture.
 1. **Install Dependencies**
 
    ```bash
+   # Install backend dependencies
    npm install
+
+   # Install frontend dependencies
+   cd client && npm install && cd ..
    ```
 
 2. **Setup MongoDB**
@@ -167,11 +179,18 @@ complexity of microservices architecture.
    # Or install MongoDB locally
    ```
 
-3. **Start Development Server**
+3. **Start Development Servers**
 
    ```bash
-   npm start
+   # Terminal 1: Start backend API server
+   npm start                    # Starts on http://localhost:3000
+
+   # Terminal 2: Start frontend development server
+   cd client && npm run dev     # Starts on http://localhost:5173
    ```
+
+   The React development server (port 5173) will proxy API requests to the backend server (port
+   3000).
 
 4. **Run Tests**
 
@@ -275,9 +294,10 @@ curl -i -X POST http://localhost:3000/api/auth/logout \
 ### Monitoring Development
 
 1. **Custom Instrumentation**: See examples in `controllers/manage-pages.js`
-2. **RUM Configuration**: Configured in `config/rum.js`
-3. **Custom Metrics**: StatsD integration for page views
-4. **Error Tracking**: Automatic error capture and logging
+2. **RUM Configuration**: Configured in `client/src/rum.js` for React SPA
+3. **RUM User Tracking**: User context management in `client/src/utils/rum.js`
+4. **Custom Metrics**: StatsD integration for page views
+5. **Error Tracking**: Automatic error capture and logging
 
 ### Database Operations
 
@@ -292,15 +312,22 @@ show collections
 db.pages.find().pretty()
 ```
 
-## Future Features
+## Features Implemented
 
-### Planned Enhancements
+### Current Functionality
 
-- **Authentication System**
-  - User registration and login
-  - JWT token management
+- **Authentication System** ✅
+  - User registration and login with React SPA
+  - JWT token management (access/refresh tokens)
   - Role-based access control
   - Session management with RUM user tracking
+  - CSRF protection for state-changing requests
+
+- **Modern Frontend Architecture** ✅
+  - React Single Page Application with React Router
+  - Vite build system with hot module replacement
+  - Component-based UI with Bootstrap styling
+  - RUM user context management and event tracking
 
 ## 📸 Screenshots
 
