@@ -12,13 +12,13 @@ export function setRumUser(user) {
 
 export function clearRumUser() {
   if (window.DD_RUM && typeof window.DD_RUM.clearUser === 'function') {
-    window.DD_RUM.clearUser();
     window.DD_RUM.addAction('user_logout');
+    window.DD_RUM.clearUser();
   }
 }
 
 export function trackLoginEvent(user) {
-  if (window.DD_RUM) {
+  if (window.DD_RUM && user) {
     window.DD_RUM.addAction('user_login', {
       email: user.email,
       role: user.role,
