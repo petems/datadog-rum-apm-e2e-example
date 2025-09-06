@@ -240,6 +240,9 @@ jobs:
           DD_APPLICATION_ID=placeholder
           DD_CLIENT_TOKEN=placeholder
           
+          # Disable Datadog tracing in CI to prevent startup issues
+          DD_TRACE_ENABLED=false
+          
           PORT=3000
           MONGODB_URI=mongodb://mongo:27017/datablog
           JWT_ACCESS_SECRET=change-me-secret
