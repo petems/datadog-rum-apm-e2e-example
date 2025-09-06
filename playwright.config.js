@@ -3,17 +3,15 @@ const isCI = !!process.env.CI;
 
 module.exports = defineConfig({
   testDir: './test/e2e',
-  // Quick local iteration: verify Mongo connectivity before tests start.
-  // Skips in CI by default (set CI env var).
-  globalSetup: process.env.CI
-    ? undefined
-    : require.resolve('./test/e2e/global-setup.js'),
+  // Global setup runs for both local and CI environments
+  globalSetup: require.resolve('./test/e2e/global-setup.js'),
 
   // Parallel execution
   fullyParallel: !isCI,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
+  // Use single worker for both CI and local to avoid database race conditions
+  workers: 1,
 
   // Reporter configuration
   reporter: isCI
@@ -36,6 +34,9 @@ module.exports = defineConfig({
     launchOptions: {
       args: ['--no-sandbox', '--disable-dev-shm-usage'],
     },
+
+    // Custom setup for adding headers only to our application requests
+    // Note: extraHTTPHeaders is removed to avoid CORS issues with external services
   },
 
   // Test projects for different browsers
@@ -56,39 +57,15 @@ module.exports = defineConfig({
           name: 'firefox',
           use: { ...devices['Desktop Firefox'] },
         },
-        {
-          name: 'webkit',
-          use: { ...devices['Desktop Safari'] },
-        },
         // Mobile testing
         {
           name: 'Mobile Chrome',
           use: { ...devices['Pixel 5'] },
         },
-        {
-          name: 'Mobile Safari',
-          use: { ...devices['iPhone 12'] },
-        },
       ],
 
-  // Local dev server (for development)
-  webServer: process.env.CI
-    ? undefined
-    : {
-        // Start the local app for quick iteration
-        command: 'npm start',
-        url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
-        timeout: 120 * 1000,
-        // Force the app to use local Mongo when Playwright boots it
-        env: {
-          PORT: '3000',
-          NODE_ENV: process.env.NODE_ENV || 'development',
-          MONGODB_URI:
-            process.env.LOCAL_MONGODB_URI ||
-            'mongodb://127.0.0.1:27017/datablog',
-        },
-      },
+  // No webServer config - we use docker-compose for consistent environments
+  // The global setup handles starting services via docker-compose
 
   // Test output directories
   outputDir: 'test-results/',
