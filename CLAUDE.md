@@ -11,9 +11,9 @@ blog pages with MongoDB storage.
 
 ## Architecture
 
-- **Backend**: Express.js server with EJS templating
+- **Backend**: Express.js server serving API endpoints
+- **Frontend**: React SPA with React Router, built with Vite
 - **Database**: MongoDB with Mongoose ODM
-- **Frontend**: jQuery for AJAX interactions, no framework
 - **Monitoring**: Datadog dd-trace for APM, browser RUM SDK
 - **Deployment**: Docker Compose with Datadog Agent
 
@@ -21,12 +21,21 @@ blog pages with MongoDB storage.
 
 ### Application Structure
 
+**Backend (Express.js API Server)**
+
 - `app.js` - Main Express application setup with Datadog tracer initialization
-- `routes/` - Express routes (index, pages, api)
+- `routes/` - Express API routes (index, pages, api)
 - `controllers/manage-pages.js` - Business logic with manual tracing examples
-- `views/` - EJS templates for all pages
 - `mongo/` - MongoDB connection and models
-- `config/rum.js` - RUM configuration for browser integration
+
+**Frontend (React SPA)**
+
+- `client/src/App.jsx` - Main React application with routing
+- `client/src/main.jsx` - React application entry point with RUM initialization
+- `client/src/components/` - React components (Navigation, Home, PageList, PageDetail, EditPage,
+  NewPage, LoginModal)
+- `client/src/rum.js` - RUM configuration for browser integration
+- `client/package.json` - Frontend dependencies (React 19, React Router, Vite)
 
 ### Datadog Integration
 
@@ -42,7 +51,8 @@ The app demonstrates RUM-APM connection via:
 ### Local Development
 
 ```bash
-npm start                    # Start the application (port 3000)
+npm start                    # Start the backend API server (port 3000)
+cd client && npm run dev     # Start the frontend development server (Vite)
 ```
 
 ### Testing
@@ -84,7 +94,8 @@ docker-compose down         # Stop all services
 
 ### Application URLs
 
-- Main app: http://localhost:3000
+- Frontend (React SPA): http://localhost:5173 (Vite dev server)
+- Backend API: http://localhost:3000
 - MongoDB: localhost:27017
 - Datadog Agent: localhost:8126 (APM), localhost:8125 (DogStatsD)
 
@@ -122,8 +133,9 @@ custom tracing patterns for APM.
 
 ### RUM-APM Connection
 
-Browser requests to `/api/page` endpoints are traced end-to-end. The RUM SDK adds trace headers that
-the backend APM picks up for distributed tracing.
+The React SPA makes API requests to `/api/page` endpoints which are traced end-to-end. The RUM SDK
+adds trace headers that the backend APM picks up for distributed tracing. The frontend communicates
+with the Express.js API server via HTTP requests.
 
 ### Database Operations
 
