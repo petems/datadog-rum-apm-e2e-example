@@ -252,16 +252,30 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           docker compose -f docker-compose.yml build datablog
-          docker compose -f docker-compose.yml up -d mongo datablog
+          docker compose -f docker-compose.yml up -d mongo datadog-agent datablog
+          echo "Services started, checking status:"
+          docker compose ps
 
       - name: Wait for app to be ready
         run: |
+          echo "Waiting for services to be ready..."
           for i in {1..90}; do
-            if curl -fsS http://localhost:3000/healthz >/dev/null; then
-              echo "App is ready"; exit 0; fi;
-            echo "Waiting for app... ($i)"; sleep 2;
+            echo "Attempt $i/90: Checking app health..."
+            if curl -fsS http://localhost:3000/healthz >/dev/null 2>&1; then
+              echo "✅ App is ready and responding!"
+              exit 0
+            fi
+            echo "⏳ App not ready yet, waiting 2 seconds..."
+            sleep 2
           done
-          echo "App failed to start in time"; docker compose ps; docker compose logs datablog || true; exit 1
+          echo "❌ App failed to start within 3 minutes"
+          echo "Docker Compose status:"
+          docker compose ps
+          echo "Datablog container logs:"
+          docker compose logs datablog || true
+          echo "Mongo container logs:"
+          docker compose logs mongo || true
+          exit 1
 
       - name: Run Playwright tests
         run: npx playwright test
@@ -278,7 +292,7 @@ jobs:
         if: failure()
         run: |
           docker compose ps
-          docker compose logs datablog mongo || true
+          docker compose logs datablog mongo datadog-agent || true
 
       - name: Stop services
         if: always()
