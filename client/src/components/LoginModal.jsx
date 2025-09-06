@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { login } from '../api'
+import { setRumUser, trackLoginEvent } from '../utils/rum'
 
 function LoginModal({ show, onHide, onLoginSuccess }) {
   const [formData, setFormData] = useState({ email: '', password: '' })
@@ -20,6 +21,11 @@ function LoginModal({ show, onHide, onLoginSuccess }) {
       if (response.ok) {
         setSuccess('Login successful!')
         localStorage.setItem('token', data.accessToken)
+        
+        // Set RUM user context and track login event
+        setRumUser(data.user)
+        trackLoginEvent(data.user)
+        
         setTimeout(() => {
           onLoginSuccess(data)
           onHide()

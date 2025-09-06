@@ -29,9 +29,7 @@ const app = express();
 // Hide implementation details from response headers
 app.disable('x-powered-by');
 
-// View engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
+// No view engine needed - serving React SPA
 
 // FIXME how does express use loggers
 //app.use(logger('datablog'));

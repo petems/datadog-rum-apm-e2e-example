@@ -1,10 +1,5 @@
 const request = require('supertest');
 
-jest.mock('./config/rum', () => ({
-  clientToken: 'test-token',
-  applicationId: 'test-app-id',
-}));
-
 jest.mock('dd-trace', () => ({
   init: jest.fn(),
   trace: jest.fn(),
