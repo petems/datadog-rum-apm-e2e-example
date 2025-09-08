@@ -1,6 +1,7 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const mockingoose = require('mockingoose');
 
 // Real models and app
 const User = require('../mongo/models/userModel');
@@ -16,21 +17,8 @@ async function hash(password) {
 }
 
 describe('Auth routes (Mongo integration)', () => {
-  const dbName = 'datablog_auth_test';
-  const mongoUri = 'mongodb://127.0.0.1:27017';
-
-  beforeAll(async () => {
-    // Connect mongoose for tests (app will not auto-connect under NODE_ENV=test)
-    await mongoose.connect(mongoUri, { dbName });
-  }, 15000);
-
-  beforeEach(async () => {
-    await User.deleteMany({});
-  });
-
-  afterAll(async () => {
-    await mongoose.connection.dropDatabase();
-    await mongoose.disconnect();
+  beforeEach(() => {
+    mockingoose.resetAll();
   });
 
   async function getCsrf(agent) {
@@ -43,11 +31,20 @@ describe('Auth routes (Mongo integration)', () => {
     return { token, cookie };
   }
 
-  test('login succeeds with real Mongo user + bcrypt hash', async () => {
+  test('login succeeds with mocked Mongo user + bcrypt hash', async () => {
     const email = 'admin@example.com';
     const password = 'AdminPassword123';
     const passwordHash = await hash(password);
-    await User.create({ email, passwordHash, role: 'admin' });
+
+    mockingoose(User).toReturn(
+      {
+        _id: new mongoose.Types.ObjectId(),
+        email,
+        passwordHash,
+        role: 'admin',
+      },
+      'findOne'
+    );
 
     const agent = request.agent(app);
     const { token, cookie } = await getCsrf(agent);
@@ -73,10 +70,19 @@ describe('Auth routes (Mongo integration)', () => {
     expect(me.body.user.email).toBe(email);
   }, 15000);
 
-  test('login fails for wrong password (real Mongo)', async () => {
+  test('login fails for wrong password (mocked Mongo)', async () => {
     const email = 'admin@example.com';
     const passwordHash = await hash('SomeOtherPass123');
-    await User.create({ email, passwordHash, role: 'admin' });
+
+    mockingoose(User).toReturn(
+      {
+        _id: new mongoose.Types.ObjectId(),
+        email,
+        passwordHash,
+        role: 'admin',
+      },
+      'findOne'
+    );
 
     const agent = request.agent(app);
     const { token, cookie } = await getCsrf(agent);

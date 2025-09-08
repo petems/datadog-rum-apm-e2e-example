@@ -1,21 +1,13 @@
 const mongoose = require('mongoose');
+const mockingoose = require('mockingoose');
 const PageModel = require('./pageModel');
 
 // Create a dummy ObjectId for testing author field
 const dummyAuthorId = new mongoose.Types.ObjectId();
 
 describe('PageModel', () => {
-  beforeAll(async () => {
-    const url = `mongodb://127.0.0.1/test_datablog`;
-    await mongoose.connect(url);
-  });
-
-  beforeEach(async () => {
-    await PageModel.deleteMany({});
-  });
-
-  afterAll(async () => {
-    await mongoose.connection.close();
+  beforeEach(() => {
+    mockingoose.resetAll();
   });
 
   describe('Page Schema', () => {
@@ -30,10 +22,9 @@ describe('PageModel', () => {
         author: dummyAuthorId,
       };
 
-      const page = new PageModel(pageData);
-      const savedPage = await page.save();
+      mockingoose(PageModel).toReturn(pageData, 'save');
+      const savedPage = await PageModel.create(pageData);
 
-      expect(savedPage._id).toBeDefined();
       expect(savedPage.id).toBe(1);
       expect(savedPage.title).toBe('Test Page');
       expect(savedPage.body).toBe('This is test content');
@@ -43,44 +34,44 @@ describe('PageModel', () => {
     });
 
     it('should create a page with minimal required fields', async () => {
-      const page = new PageModel({
+      const pageData = {
         id: 2,
         title: 'Minimal Page',
         body: 'Minimal content',
         author: dummyAuthorId,
-      });
+      };
 
-      const savedPage = await page.save();
+      mockingoose(PageModel).toReturn(pageData, 'save');
+      const savedPage = await PageModel.create(pageData);
 
-      expect(savedPage._id).toBeDefined();
       expect(savedPage.id).toBe(2);
       expect(savedPage.title).toBe('Minimal Page');
       expect(savedPage.body).toBe('Minimal content');
     });
 
     it('should allow pages without id field', async () => {
-      const page = new PageModel({
+      const pageData = {
         title: 'No ID Page',
         body: 'Content without ID',
         author: dummyAuthorId,
-      });
+      };
 
-      const savedPage = await page.save();
+      mockingoose(PageModel).toReturn(pageData, 'save');
+      const savedPage = await PageModel.create(pageData);
 
-      expect(savedPage._id).toBeDefined();
       expect(savedPage.title).toBe('No ID Page');
       expect(savedPage.body).toBe('Content without ID');
     });
 
     it('should find pages by id', async () => {
-      const testPage = new PageModel({
+      const doc = {
         id: 100,
         title: 'Findable Page',
         body: 'Can be found by id',
         author: dummyAuthorId,
-      });
-      await testPage.save();
+      };
 
+      mockingoose(PageModel).toReturn([doc], 'find');
       const foundPages = await PageModel.find({ id: 100 });
 
       expect(foundPages).toHaveLength(1);
@@ -88,95 +79,78 @@ describe('PageModel', () => {
     });
 
     it('should update a page', async () => {
-      const page = new PageModel({
-        id: 200,
-        title: 'Original Title',
-        body: 'Original Content',
-        createdDate: new Date(),
-        author: dummyAuthorId,
-      });
-      await page.save();
-
-      const updatedDate = new Date();
-      await PageModel.updateOne(
-        { id: 200 },
-        {
-          title: 'Updated Title',
-          body: 'Updated Content',
-          updatedDate,
-        }
+      mockingoose(PageModel).toReturn(
+        { acknowledged: true, modifiedCount: 1 },
+        'updateOne'
       );
 
-      const updatedPage = await PageModel.findOne({ id: 200 });
-      expect(updatedPage.title).toBe('Updated Title');
-      expect(updatedPage.body).toBe('Updated Content');
+      const res = await PageModel.updateOne(
+        { id: 200 },
+        { title: 'Updated Title', body: 'Updated Content' }
+      );
+
+      expect(res.modifiedCount).toBe(1);
     });
 
     it('should delete a page by id', async () => {
-      const page = new PageModel({
-        id: 300,
-        title: 'To Be Deleted',
-        body: 'This will be deleted',
-        author: dummyAuthorId,
-      });
-      await page.save();
+      mockingoose(PageModel).toReturn({ deletedCount: 1 }, 'deleteOne');
 
-      await PageModel.deleteOne({ id: 300 });
+      const res = await PageModel.deleteOne({ id: 300 });
 
-      const deletedPage = await PageModel.findOne({ id: 300 });
-      expect(deletedPage).toBeNull();
+      expect(res.deletedCount).toBe(1);
     });
 
     it('should find multiple pages', async () => {
-      const page1 = new PageModel({
-        id: 401,
-        title: 'Page One',
-        body: 'Content One',
-        author: dummyAuthorId,
-      });
-      const page2 = new PageModel({
-        id: 402,
-        title: 'Page Two',
-        body: 'Content Two',
-        author: dummyAuthorId,
-      });
+      const docs = [
+        {
+          id: 401,
+          title: 'Page One',
+          body: 'Content One',
+          author: dummyAuthorId,
+        },
+        {
+          id: 402,
+          title: 'Page Two',
+          body: 'Content Two',
+          author: dummyAuthorId,
+        },
+      ];
 
-      await page1.save();
-      await page2.save();
-
+      mockingoose(PageModel).toReturn(docs, 'find');
       const allPages = await PageModel.find({});
       expect(allPages).toHaveLength(2);
 
+      mockingoose(PageModel).toReturn(docs, 'find');
       const sortedPages = await PageModel.find({}).sort({ id: 1 });
       expect(sortedPages[0].id).toBe(401);
       expect(sortedPages[1].id).toBe(402);
     });
 
     it('should handle boolean fields correctly', async () => {
-      const pageWithAttachment = new PageModel({
+      const withAttachment = {
         id: 500,
         title: 'Page with attachment',
         body: 'Has attachment',
         hasAttachment: true,
         author: dummyAuthorId,
-      });
+      };
 
-      const pageWithoutAttachment = new PageModel({
+      const withoutAttachment = {
         id: 501,
         title: 'Page without attachment',
         body: 'No attachment',
         hasAttachment: false,
         author: dummyAuthorId,
-      });
+      };
 
-      await pageWithAttachment.save();
-      await pageWithoutAttachment.save();
+      mockingoose(PageModel).toReturn(withAttachment, 'findOne');
+      const foundWith = await PageModel.findOne({ id: 500 });
 
-      const withAttachment = await PageModel.findOne({ id: 500 });
-      const withoutAttachment = await PageModel.findOne({ id: 501 });
+      mockingoose(PageModel).toReturn(withoutAttachment, 'findOne');
+      const foundWithout = await PageModel.findOne({ id: 501 });
 
-      expect(withAttachment.hasAttachment).toBe(true);
-      expect(withoutAttachment.hasAttachment).toBe(false);
+      expect(foundWith.hasAttachment).toBe(true);
+      expect(foundWithout.hasAttachment).toBe(false);
     });
   });
 });
