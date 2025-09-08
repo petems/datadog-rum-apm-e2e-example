@@ -31,20 +31,24 @@ describe('Auth routes (Mongo integration)', () => {
     return { token, cookie };
   }
 
-  test('login succeeds with mocked Mongo user + bcrypt hash', async () => {
-    const email = 'admin@example.com';
-    const password = 'AdminPassword123';
-    const passwordHash = await hash(password);
-
+  const mockUserFindOne = passwordHash => {
     mockingoose(User).toReturn(
       {
         _id: new mongoose.Types.ObjectId(),
-        email,
+        email: 'admin@example.com',
         passwordHash,
         role: 'admin',
       },
       'findOne'
     );
+  };
+
+  test('login succeeds with mocked Mongo user + bcrypt hash', async () => {
+    const email = 'admin@example.com';
+    const password = 'AdminPassword123';
+    const passwordHash = await hash(password);
+
+    mockUserFindOne(passwordHash);
 
     const agent = request.agent(app);
     const { token, cookie } = await getCsrf(agent);
@@ -74,15 +78,7 @@ describe('Auth routes (Mongo integration)', () => {
     const email = 'admin@example.com';
     const passwordHash = await hash('SomeOtherPass123');
 
-    mockingoose(User).toReturn(
-      {
-        _id: new mongoose.Types.ObjectId(),
-        email,
-        passwordHash,
-        role: 'admin',
-      },
-      'findOne'
-    );
+    mockUserFindOne(passwordHash);
 
     const agent = request.agent(app);
     const { token, cookie } = await getCsrf(agent);

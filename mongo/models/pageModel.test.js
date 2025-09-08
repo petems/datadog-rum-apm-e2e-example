@@ -119,8 +119,6 @@ describe('PageModel', () => {
       mockingoose(PageModel).toReturn(docs, 'find');
       const allPages = await PageModel.find({});
       expect(allPages).toHaveLength(2);
-
-      mockingoose(PageModel).toReturn(docs, 'find');
       const sortedPages = await PageModel.find({}).sort({ id: 1 });
       expect(sortedPages[0].id).toBe(401);
       expect(sortedPages[1].id).toBe(402);
