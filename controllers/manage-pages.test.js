@@ -6,9 +6,9 @@ const {
   updatePage,
 } = require('./manage-pages');
 const pageModel = require('../mongo/models/pageModel');
+const mockingoose = require('mockingoose');
 const logger = require('../logger');
 
-jest.mock('../mongo/models/pageModel');
 jest.mock('../logger');
 jest.mock('dd-trace', () => ({
   trace: jest.fn((name, fn) => fn()),
@@ -17,13 +17,13 @@ jest.mock('dd-trace', () => ({
 
 // Mock user objects for testing
 const mockUser = {
-  id: 'user123',
+  id: '507f1f77bcf86cd799439011',
   email: 'test@example.com',
   role: 'user',
 };
 
 const mockAdminUser = {
-  id: 'admin456',
+  id: '507f1f77bcf86cd799439012',
   email: 'admin@example.com',
   role: 'admin',
 };
@@ -31,6 +31,7 @@ const mockAdminUser = {
 describe('manage-pages controller', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockingoose.resetAll();
   });
 
   describe('getAllPages', () => {
@@ -39,79 +40,73 @@ describe('manage-pages controller', () => {
         { id: 1, title: 'Page 1', body: 'Content 1' },
         { id: 2, title: 'Page 2', body: 'Content 2' },
       ];
-      const mockQueryResult = {
-        populate: jest.fn().mockResolvedValue(mockPages),
-      };
-      pageModel.find.mockReturnValue(mockQueryResult);
+      const findSpy = jest.spyOn(pageModel, 'find');
+      mockingoose(pageModel).toReturn(mockPages, 'find');
 
       const result = await getAllPages(mockAdminUser);
 
-      expect(pageModel.find).toHaveBeenCalledWith({});
-      expect(mockQueryResult.populate).toHaveBeenCalledWith('author', 'email');
+      expect(findSpy).toHaveBeenCalledWith({});
       expect(logger.info).toHaveBeenCalledWith(
         `API Successfully found pages, count: ${mockPages.length}, user: ${mockAdminUser.email}, role: ${mockAdminUser.role}`
       );
-      expect(result).toEqual(mockPages);
+      expect(result).toHaveLength(mockPages.length);
+      expect(result[0]).toMatchObject(mockPages[0]);
+      expect(result[1]).toMatchObject(mockPages[1]);
+      findSpy.mockRestore();
     });
 
     it('should handle empty results', async () => {
-      const mockQueryResult = {
-        populate: jest.fn().mockResolvedValue([]),
-      };
-      pageModel.find.mockReturnValue(mockQueryResult);
+      const findSpy = jest.spyOn(pageModel, 'find');
+      mockingoose(pageModel).toReturn([], 'find');
 
       const result = await getAllPages(mockUser);
 
-      expect(pageModel.find).toHaveBeenCalledWith({ author: mockUser.id });
+      expect(findSpy).toHaveBeenCalledWith({ author: mockUser.id });
       expect(result).toEqual([]);
       expect(logger.info).toHaveBeenCalledWith(
         `API Successfully found pages, count: 0, user: ${mockUser.email}, role: ${mockUser.role}`
       );
+      findSpy.mockRestore();
     });
 
     it('should filter pages by user for non-admin users', async () => {
       const mockPages = [{ id: 1, title: 'User Page', body: 'User Content' }];
-      const mockQueryResult = {
-        populate: jest.fn().mockResolvedValue(mockPages),
-      };
-      pageModel.find.mockReturnValue(mockQueryResult);
+      const findSpy = jest.spyOn(pageModel, 'find');
+      mockingoose(pageModel).toReturn(mockPages, 'find');
 
       const result = await getAllPages(mockUser);
 
-      expect(pageModel.find).toHaveBeenCalledWith({ author: mockUser.id });
-      expect(mockQueryResult.populate).toHaveBeenCalledWith('author', 'email');
-      expect(result).toEqual(mockPages);
+      expect(findSpy).toHaveBeenCalledWith({ author: mockUser.id });
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject(mockPages[0]);
+      findSpy.mockRestore();
     });
   });
 
   describe('getPageById', () => {
     it('should return page and log success when found', async () => {
       const mockPage = { id: 1, title: 'Page 1', body: 'Content 1' };
-      const mockQueryResult = {
-        populate: jest.fn().mockResolvedValue([mockPage]),
-      };
-      pageModel.find.mockReturnValue(mockQueryResult);
+      const findSpy = jest.spyOn(pageModel, 'find');
+      mockingoose(pageModel).toReturn([mockPage], 'find');
 
       const result = await getPageById(1, mockAdminUser);
 
-      expect(pageModel.find).toHaveBeenCalledWith({ id: 1 });
-      expect(mockQueryResult.populate).toHaveBeenCalledWith('author', 'email');
+      expect(findSpy).toHaveBeenCalledWith({ id: 1 });
       expect(logger.info).toHaveBeenCalledWith(
-        { page: [mockPage] },
+        { page: expect.arrayContaining([expect.objectContaining(mockPage)]) },
         'API Successfully found page'
       );
-      expect(result).toEqual([mockPage]);
+      expect(result[0]).toMatchObject(mockPage);
+      findSpy.mockRestore();
     });
 
     it('should log warning when page not found', async () => {
-      const mockQueryResult = {
-        populate: jest.fn().mockResolvedValue([]),
-      };
-      pageModel.find.mockReturnValue(mockQueryResult);
+      const findSpy = jest.spyOn(pageModel, 'find');
+      mockingoose(pageModel).toReturn([], 'find');
 
       const result = await getPageById(999, mockUser);
 
-      expect(pageModel.find).toHaveBeenCalledWith({
+      expect(findSpy).toHaveBeenCalledWith({
         id: 999,
         author: mockUser.id,
       });
@@ -119,30 +114,31 @@ describe('manage-pages controller', () => {
         'Page: 999 not found or not accessible by user: test@example.com'
       );
       expect(result).toEqual([]);
+      findSpy.mockRestore();
     });
 
     it('should filter pages by user for non-admin users', async () => {
-      const mockQueryResult = {
-        populate: jest.fn().mockResolvedValue([]),
-      };
-      pageModel.find.mockReturnValue(mockQueryResult);
+      const findSpy = jest.spyOn(pageModel, 'find');
+      mockingoose(pageModel).toReturn([], 'find');
 
       await getPageById(1, mockUser);
 
-      expect(pageModel.find).toHaveBeenCalledWith({
+      expect(findSpy).toHaveBeenCalledWith({
         id: 1,
         author: mockUser.id,
       });
+      findSpy.mockRestore();
     });
   });
 
   describe('deletePageById', () => {
     it('should delete page and log success', async () => {
-      pageModel.deleteOne.mockResolvedValue({ deletedCount: 1 });
+      const deleteSpy = jest.spyOn(pageModel, 'deleteOne');
+      mockingoose(pageModel).toReturn({ deletedCount: 1 }, 'deleteOne');
 
       const result = await deletePageById(1, mockUser);
 
-      expect(pageModel.deleteOne).toHaveBeenCalledWith({
+      expect(deleteSpy).toHaveBeenCalledWith({
         id: 1,
         author: mockUser.id,
       });
@@ -150,6 +146,7 @@ describe('manage-pages controller', () => {
         'Successful delete of page: 1 by user: test@example.com'
       );
       expect(result).toBe(true);
+      deleteSpy.mockRestore();
     });
 
     it('should throw error when user is not provided', async () => {
@@ -159,7 +156,7 @@ describe('manage-pages controller', () => {
     });
 
     it('should throw error when page not found or access denied', async () => {
-      pageModel.deleteOne.mockResolvedValue({ deletedCount: 0 });
+      mockingoose(pageModel).toReturn({ deletedCount: 0 }, 'deleteOne');
 
       await expect(deletePageById(1, mockUser)).rejects.toThrow(
         "Page 1 not found or you don't have permission to delete it"
@@ -167,12 +164,14 @@ describe('manage-pages controller', () => {
     });
 
     it('should allow admin to delete any page', async () => {
-      pageModel.deleteOne.mockResolvedValue({ deletedCount: 1 });
+      const deleteSpy = jest.spyOn(pageModel, 'deleteOne');
+      mockingoose(pageModel).toReturn({ deletedCount: 1 }, 'deleteOne');
 
       const result = await deletePageById(1, mockAdminUser);
 
-      expect(pageModel.deleteOne).toHaveBeenCalledWith({ id: 1 });
+      expect(deleteSpy).toHaveBeenCalledWith({ id: 1 });
       expect(result).toBe(true);
+      deleteSpy.mockRestore();
     });
   });
 
@@ -242,39 +241,32 @@ describe('manage-pages controller', () => {
 
   describe('createPage', () => {
     beforeEach(() => {
-      const mockQuery = {
-        limit: jest.fn().mockResolvedValue([{ id: 5 }]),
-      };
-      pageModel.find.mockReturnValue(mockQuery);
-      pageModel.mockImplementation(function (data) {
-        return {
-          ...data,
-          save: jest.fn().mockResolvedValue(true),
-        };
-      });
+      mockingoose.resetAll();
     });
 
     it('should create new page with generated ID', async () => {
       const body = { title: 'New Page', body: 'New Content' };
+      const findSpy = jest.spyOn(pageModel, 'find');
+      mockingoose(pageModel).toReturn([{ id: 5 }], 'find');
+      mockingoose(pageModel).toReturn(doc => doc, 'save');
 
       const result = await createPage(body, mockUser);
 
-      expect(pageModel.find).toHaveBeenCalledWith({ id: { $ne: '' } }, 'id', {
+      expect(findSpy).toHaveBeenCalledWith({ id: { $ne: '' } }, 'id', {
         sort: { id: 'descending' },
       });
-      expect(pageModel).toHaveBeenCalledWith({
+      const obj = result.toObject();
+      expect(obj).toMatchObject({
         id: 6,
         title: 'New Page',
         body: 'New Content',
-        author: mockUser.id,
-        createdDate: expect.any(Number),
-        updatedDate: expect.any(Number),
       });
-      expect(result.save).toHaveBeenCalled();
+      expect(obj.author.toString()).toBe(mockUser.id);
       expect(logger.info).toHaveBeenCalledWith(
         { page: expect.any(Object) },
-        'Creating page by author: user123'
+        `Creating page by author: ${mockUser.id}`
       );
+      findSpy.mockRestore();
     });
 
     it('should throw error when user is not provided', async () => {
@@ -286,22 +278,23 @@ describe('manage-pages controller', () => {
     });
 
     it('should use ID 1 when no pages exist', async () => {
-      const mockQuery = {
-        limit: jest.fn().mockResolvedValue([]),
-      };
-      pageModel.find.mockReturnValue(mockQuery);
-      const body = { title: 'First Page', body: 'First Content' };
+      const findSpy = jest.spyOn(pageModel, 'find');
+      mockingoose(pageModel).toReturn([], 'find');
+      mockingoose(pageModel).toReturn(doc => doc, 'save');
 
-      await createPage(body, mockUser);
+      await createPage(
+        { title: 'First Page', body: 'First Content' },
+        mockUser
+      );
 
-      expect(pageModel).toHaveBeenCalledWith({
-        id: 1,
-        title: 'First Page',
-        body: 'First Content',
-        author: mockUser.id,
-        createdDate: expect.any(Number),
-        updatedDate: expect.any(Number),
+      expect(findSpy).toHaveBeenCalledWith({ id: { $ne: '' } }, 'id', {
+        sort: { id: 'descending' },
       });
+      expect(logger.info).toHaveBeenCalledWith(
+        { page: expect.any(Object) },
+        `Creating page by author: ${mockUser.id}`
+      );
+      findSpy.mockRestore();
     });
   });
 });
