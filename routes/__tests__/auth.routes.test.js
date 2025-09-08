@@ -1,12 +1,7 @@
-const request = require('supertest'); // eslint-disable-line no-unused-vars
+const request = require('supertest');
 const express = require('express');
 const cookieParser = require('cookie-parser');
-jest.mock('../../mongo/models/userModel', () => ({
-  findOne: jest.fn(),
-  create: jest.fn(),
-  findById: jest.fn(),
-  findByIdAndUpdate: jest.fn(),
-}));
+const mockingoose = require('mockingoose');
 const authRouter = require('../auth');
 const User = require('../../mongo/models/userModel');
 
@@ -15,7 +10,15 @@ describe('Auth Routes', () => {
   let agent;
   let userState;
 
-  beforeAll(async () => {
+  beforeAll(() => {
+    app = express();
+    app.use(express.json());
+    app.use(cookieParser());
+    app.use('/api/auth', authRouter);
+    agent = request.agent(app);
+  });
+
+  beforeEach(async () => {
     const { hashPassword } = require('../../utils/password');
     userState = {
       _id: '507f1f77bcf86cd799439011',
@@ -24,42 +27,11 @@ describe('Auth Routes', () => {
       role: 'user',
       tokenVersion: 0,
     };
-    User.create.mockImplementation(async doc => ({
-      _id: 'aaaaaaaaaaaaaaaaaaaaaaaa',
-      email: doc.email,
-      role: 'user',
-      tokenVersion: 0,
-    }));
-    User.findOne.mockImplementation(async query => {
-      if (query.email === userState.email) {
-        return { ...userState };
-      }
-      return null;
-    });
-    User.findById.mockImplementation(async id =>
-      id === userState._id ? { ...userState } : null
-    );
-    User.findByIdAndUpdate.mockImplementation(async (id, update) => {
-      if (
-        id === userState._id &&
-        update &&
-        update.$inc &&
-        update.$inc.tokenVersion
-      ) {
-        userState.tokenVersion += update.$inc.tokenVersion;
-      }
-      return { ...userState };
-    });
-
-    app = express();
-    app.use(express.json());
-    app.use(cookieParser());
-    app.use('/api/auth', authRouter);
-    agent = require('supertest').agent(app);
+    mockingoose.resetAll();
   });
 
   afterAll(() => {
-    jest.resetAllMocks();
+    mockingoose.resetAll();
   });
 
   test('GET /api/auth/csrf returns csrf token', async () => {
@@ -82,6 +54,24 @@ describe('Auth Routes', () => {
   });
 
   test('POST /api/auth/login returns access token and sets refresh cookie', async () => {
+    mockingoose(User).toReturn(query => {
+      const q = query.getQuery();
+      if (q.email === userState.email) {
+        return { ...userState };
+      }
+      if (String(q._id) === userState._id) {
+        return { ...userState };
+      }
+      return null;
+    }, 'findOne');
+    mockingoose(User).toReturn(query => {
+      const update = query.getUpdate();
+      if (update && update.$inc && update.$inc.tokenVersion) {
+        userState.tokenVersion += update.$inc.tokenVersion;
+      }
+      return { ...userState };
+    }, 'findOneAndUpdate');
+
     const csrfRes = await agent.get('/api/auth/csrf');
     expect(csrfRes.status).toBe(200);
     expect(csrfRes.body).toHaveProperty('csrfToken');

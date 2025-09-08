@@ -1,5 +1,6 @@
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
+const mockingoose = require('mockingoose');
 
 // Mock logger early so route logs don't print during tests
 jest.mock('../logger', () => ({
@@ -9,10 +10,7 @@ jest.mock('../logger', () => ({
 }));
 const logger = require('../logger');
 
-// Mock User model used by routes/auth
-jest.mock('../mongo/models/userModel', () => ({
-  findOne: jest.fn(),
-}));
+// Use real User model with mockingoose
 const User = require('../mongo/models/userModel');
 
 // Ensure NODE_ENV is 'test' so app doesn't connect to Mongo or init tracing
@@ -23,6 +21,7 @@ const app = require('../app');
 describe('Auth routes - login', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockingoose.resetAll();
   });
 
   async function getCsrf(agent) {
@@ -38,13 +37,16 @@ describe('Auth routes - login', () => {
   test('returns 200 and accessToken on successful login', async () => {
     const password = 'AdminPassword123';
     const passwordHash = await bcrypt.hash(password, 12);
-    User.findOne.mockResolvedValue({
-      _id: { toString: () => 'user123' },
-      email: 'admin@example.com',
-      role: 'admin',
-      tokenVersion: 0,
-      passwordHash,
-    });
+    mockingoose(User).toReturn(
+      {
+        _id: { toString: () => 'user123' },
+        email: 'admin@example.com',
+        role: 'admin',
+        tokenVersion: 0,
+        passwordHash,
+      },
+      'findOne'
+    );
 
     const agent = request.agent(app);
     const { token, cookie } = await getCsrf(agent);
@@ -68,13 +70,16 @@ describe('Auth routes - login', () => {
 
   test('returns 401 and logs details when password is invalid', async () => {
     const wrongHash = await bcrypt.hash('WrongPassword999', 12);
-    User.findOne.mockResolvedValue({
-      _id: { toString: () => 'user123' },
-      email: 'admin@example.com',
-      role: 'admin',
-      tokenVersion: 0,
-      passwordHash: wrongHash,
-    });
+    mockingoose(User).toReturn(
+      {
+        _id: { toString: () => 'user123' },
+        email: 'admin@example.com',
+        role: 'admin',
+        tokenVersion: 0,
+        passwordHash: wrongHash,
+      },
+      'findOne'
+    );
 
     const agent = request.agent(app);
     const { token, cookie } = await getCsrf(agent);
@@ -102,7 +107,7 @@ describe('Auth routes - login', () => {
   });
 
   test('returns 401 and logs userFound=false when user not found', async () => {
-    User.findOne.mockResolvedValue(null);
+    mockingoose(User).toReturn(null, 'findOne');
 
     const agent = request.agent(app);
     const { token, cookie } = await getCsrf(agent);

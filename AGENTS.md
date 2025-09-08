@@ -44,6 +44,7 @@ Related docs: see `README.md` and `docs/DEVELOPMENT.md` for workflows, commands,
 ## Testing Guidelines
 
 - Frameworks: Jest (unit/integration) and Playwright (E2E).
+- Use mockingoose to stub Mongoose models so unit tests run without MongoDB.
 - Naming: `*.test.js` next to code or at repo root (e.g., `app.test.js`).
 - Before PRs: run `npm run test:coverage`; aim to maintain or increase coverage.
 - E2E rely on `playwright.config.js`; ensure app is running or use Playwright's server config.
