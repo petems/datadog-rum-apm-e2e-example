@@ -45,17 +45,22 @@ let createPage = async (body, user) => {
     throw new Error('User authentication required to create pages');
   }
 
+  const pageBody = body.body || body.content;
+  if (!body.title || !pageBody) {
+    throw new Error('Title and content are required');
+  }
+
   // Setup Manual Tracing using await tracer.trace
   const id = await tracer.trace('manage-pages.getNextPageId', async () => {
     return await getNextPageId();
   });
   const result = await tracer.trace('manage-pages.savePage', async () => {
-    return await savePage(id, body.title, body.body, user.id);
+    return await savePage(id, body.title, pageBody, user.id);
   });
 
   // Original without Tracing
   //let id = await getNextPageId();
-  //let result = await savePage(id, body.title, body.body, user.id);
+  //let result = await savePage(id, body.title, pageBody, user.id);
 
   return result;
 };

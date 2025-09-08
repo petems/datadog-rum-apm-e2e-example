@@ -277,6 +277,22 @@ describe('manage-pages controller', () => {
       );
     });
 
+    it('should accept content field when creating a page', async () => {
+      const body = { title: 'Alt Page', content: 'Alt Content' };
+
+      const result = await createPage(body, mockUser);
+
+      expect(pageModel).toHaveBeenCalledWith({
+        id: 6,
+        title: 'Alt Page',
+        body: 'Alt Content',
+        author: mockUser.id,
+        createdDate: expect.any(Number),
+        updatedDate: expect.any(Number),
+      });
+      expect(result.save).toHaveBeenCalled();
+    });
+
     it('should throw error when user is not provided', async () => {
       const body = { title: 'New Page', body: 'New Content' };
 
