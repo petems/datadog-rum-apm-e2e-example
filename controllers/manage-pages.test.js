@@ -8,6 +8,7 @@ const {
 const pageModel = require('../mongo/models/pageModel');
 const mockingoose = require('mockingoose');
 const logger = require('../logger');
+const mongoose = require('mongoose');
 
 jest.mock('../logger');
 jest.mock('dd-trace', () => ({
@@ -61,7 +62,9 @@ describe('manage-pages controller', () => {
 
       const result = await getAllPages(mockUser);
 
-      expect(findSpy).toHaveBeenCalledWith({ author: mockUser.id });
+      expect(findSpy).toHaveBeenCalledWith({
+        author: new mongoose.Types.ObjectId(mockUser.id),
+      });
       expect(result).toEqual([]);
       expect(logger.info).toHaveBeenCalledWith(
         `API Successfully found pages, count: 0, user: ${mockUser.email}, role: ${mockUser.role}`
@@ -76,7 +79,9 @@ describe('manage-pages controller', () => {
 
       const result = await getAllPages(mockUser);
 
-      expect(findSpy).toHaveBeenCalledWith({ author: mockUser.id });
+      expect(findSpy).toHaveBeenCalledWith({
+        author: new mongoose.Types.ObjectId(mockUser.id),
+      });
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject(mockPages[0]);
       findSpy.mockRestore();
@@ -108,7 +113,7 @@ describe('manage-pages controller', () => {
 
       expect(findSpy).toHaveBeenCalledWith({
         id: 999,
-        author: mockUser.id,
+        author: new mongoose.Types.ObjectId(mockUser.id),
       });
       expect(logger.warn).toHaveBeenCalledWith(
         'Page: 999 not found or not accessible by user: test@example.com'
@@ -125,7 +130,7 @@ describe('manage-pages controller', () => {
 
       expect(findSpy).toHaveBeenCalledWith({
         id: 1,
-        author: mockUser.id,
+        author: new mongoose.Types.ObjectId(mockUser.id),
       });
       findSpy.mockRestore();
     });
@@ -140,7 +145,7 @@ describe('manage-pages controller', () => {
 
       expect(deleteSpy).toHaveBeenCalledWith({
         id: 1,
-        author: mockUser.id,
+        author: new mongoose.Types.ObjectId(mockUser.id),
       });
       expect(logger.info).toHaveBeenCalledWith(
         'Successful delete of page: 1 by user: test@example.com'
@@ -181,7 +186,10 @@ describe('manage-pages controller', () => {
         id: 1,
         title: 'Old Title',
         body: 'Old Body',
-        author: mockUser.id,
+        author: {
+          equals: jest.fn().mockReturnValue(true),
+          toString: () => mockUser.id,
+        },
         save: jest.fn().mockResolvedValue(true),
       };
       const updateBody = { title: 'New Title', body: 'New Body' };
@@ -213,7 +221,9 @@ describe('manage-pages controller', () => {
         id: 1,
         title: 'Old Title',
         body: 'Old Body',
-        author: 'otherId',
+        author: {
+          equals: jest.fn().mockReturnValue(false),
+        },
       };
       const updateBody = { title: 'New Title', body: 'New Body' };
 
@@ -222,12 +232,36 @@ describe('manage-pages controller', () => {
       );
     });
 
+    it('should properly handle ObjectId comparison for page ownership', async () => {
+      const mockPage = {
+        id: 1,
+        title: 'Old Title',
+        body: 'Old Body',
+        author: {
+          equals: jest.fn().mockReturnValue(true),
+          toString: () => mockUser.id,
+        },
+        save: jest.fn().mockResolvedValue(true),
+      };
+      const updateBody = { title: 'New Title', body: 'New Body' };
+
+      const result = await updatePage(mockPage, updateBody, mockUser);
+
+      expect(mockPage.author.equals).toHaveBeenCalledWith(
+        new mongoose.Types.ObjectId(mockUser.id)
+      );
+      expect(mockPage.title).toBe('New Title');
+      expect(result).toBe(mockPage);
+    });
+
     it('should allow admin to update any page', async () => {
       const mockPage = {
         id: 1,
         title: 'Old Title',
         body: 'Old Body',
-        author: 'otherId',
+        author: {
+          equals: jest.fn().mockReturnValue(false),
+        },
         save: jest.fn().mockResolvedValue(true),
       };
       const updateBody = { title: 'New Title', body: 'New Body' };
@@ -261,7 +295,7 @@ describe('manage-pages controller', () => {
         title: 'New Page',
         body: 'New Content',
       });
-      expect(obj.author.toString()).toBe(mockUser.id);
+      expect(obj.author).toEqual(new mongoose.Types.ObjectId(mockUser.id));
       expect(logger.info).toHaveBeenCalledWith(
         { page: expect.any(Object) },
         `Creating page by author: ${mockUser.id}`

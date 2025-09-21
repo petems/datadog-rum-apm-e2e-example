@@ -1,6 +1,7 @@
 const pageModel = require('../mongo/models/pageModel');
 const logger = require('../logger');
 const tracer = require('dd-trace');
+const mongoose = require('mongoose');
 
 let getAllPages = async (user = null) => {
   const query = {};
@@ -8,7 +9,7 @@ let getAllPages = async (user = null) => {
   // Regular users can only see their own pages
   // Admins can see all pages
   if (user && user.role !== 'admin') {
-    query.author = user.id;
+    query.author = new mongoose.Types.ObjectId(user.id);
   }
 
   const pages = await pageModel.find(query).populate('author', 'email');
@@ -24,7 +25,7 @@ let getPageById = async (page_id, user = null) => {
   // Regular users can only access their own pages
   // Admins can access any page
   if (user && user.role !== 'admin') {
-    query.author = user.id;
+    query.author = new mongoose.Types.ObjectId(user.id);
   }
 
   const pages = await pageModel.find(query).populate('author', 'email');
@@ -70,7 +71,7 @@ let deletePageById = async (page_id, user) => {
   // Regular users can only delete their own pages
   // Admins can delete any page
   if (user.role !== 'admin') {
-    query.author = user.id;
+    query.author = new mongoose.Types.ObjectId(user.id);
   }
 
   const result = await pageModel.deleteOne(query);
@@ -92,7 +93,10 @@ let updatePage = async (pageModel, body, user) => {
 
   // Regular users can only update their own pages
   // Admins can update any page
-  if (user.role !== 'admin' && pageModel.author.toString() !== user.id) {
+  if (
+    user.role !== 'admin' &&
+    !pageModel.author.equals(new mongoose.Types.ObjectId(user.id))
+  ) {
     throw new Error('You can only update your own pages');
   }
 
@@ -117,7 +121,7 @@ async function savePage(id, title, body, authorId) {
     id,
     title,
     body,
-    author: authorId,
+    author: new mongoose.Types.ObjectId(authorId),
     createdDate: curDate,
     updatedDate: curDate,
   });
