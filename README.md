@@ -97,12 +97,33 @@ RUM-APM integration concepts.
 
    ```bash
    DD_API_KEY=your_api_key_here
-   DD_RUM_APPLICATION_ID=your_rum_app_id
-   DD_RUM_CLIENT_TOKEN=your_rum_client_token
    DD_SITE=datadoghq.com  # Or your Datadog site
    ```
 
-3. **Build and Start Services**
+3. **Configure RUM (Frontend Monitoring)**
+
+   Set up the RUM configuration in the client folder:
+
+   ```bash
+   cd client
+   cp .env.example .env
+   ```
+
+   Edit `client/.env` with your Datadog RUM credentials:
+
+   ```bash
+   VITE_DD_RUM_APP_ID=your_rum_application_id
+   VITE_DD_RUM_CLIENT_TOKEN=your_rum_client_token
+   VITE_DD_SITE=datadoghq.com  # Or your Datadog site
+   ```
+
+   To obtain these credentials:
+   - Log into your [Datadog account](https://app.datadoghq.com/)
+   - Navigate to **UX Monitoring** → **RUM Applications**
+   - Create a new RUM application or select an existing one
+   - Copy the **Application ID** and **Client Token**
+
+4. **Build and Start Services**
 
    ```bash
    # Build the application image
@@ -120,7 +141,7 @@ RUM-APM integration concepts.
    docker-compose logs -f
    ```
 
-4. **Verify Services**
+5. **Verify Services**
 
    ```bash
    # Check all containers are running
@@ -129,30 +150,25 @@ RUM-APM integration concepts.
    # Should show 3 services: app, mongo, datadog-agent
    ```
 
-5. **Create Your First User**
+6. **Seed Initial Data**
 
-   Once the services are running, create your first user account:
+   Once the services are running, seed the database with initial users and sample data:
 
    ```bash
-   # Get CSRF token
-   CSRF_TOKEN=$(curl -s http://localhost:3000/api/auth/csrf | jq -r .csrfToken)
-
-   # Register first user
-   curl -X POST http://localhost:3000/api/auth/register \
-     -H 'Content-Type: application/json' \
-     -H "csrf-token: $CSRF_TOKEN" \
-     -d '{"email":"admin@example.com","password":"Admin123"}'
+   # Seed database with sample users and content
+   npm run seed
    ```
 
-   Or register via the web interface at http://localhost:3000
+   This creates sample users you can use to log in, or register new users via the web interface at
+   http://localhost:3000
 
-6. **Access Application**
+7. **Access Application**
    - Frontend: http://localhost:3000 (serves React SPA)
    - Backend API: http://localhost:3000/api
    - MongoDB: localhost:27017
    - Datadog Agent: localhost:8126 (APM), localhost:8125 (StatsD)
 
-7. **Stop Services**
+8. **Stop Services**
 
    ```bash
    docker-compose down
@@ -170,7 +186,21 @@ RUM-APM integration concepts.
    cd client && npm install && cd ..
    ```
 
-2. **Setup MongoDB**
+2. **Configure Environment**
+
+   ```bash
+   # Setup backend environment
+   cp .env.example .env
+   # Edit .env with your Datadog API key
+
+   # Setup frontend RUM configuration
+   cd client
+   cp .env.example .env
+   # Edit client/.env with your RUM credentials
+   cd ..
+   ```
+
+3. **Setup MongoDB**
 
    ```bash
    # Using Docker
@@ -179,7 +209,7 @@ RUM-APM integration concepts.
    # Or install MongoDB locally
    ```
 
-3. **Start Development Servers**
+4. **Start Development Servers**
 
    ```bash
    # Terminal 1: Start backend API server
@@ -192,7 +222,13 @@ RUM-APM integration concepts.
    The React development server (port 5173) will proxy API requests to the backend server (port
    3000).
 
-4. **Run Tests**
+5. **Seed Database**
+
+```bash
+npm run seed              # Seed database with sample users and content
+```
+
+6. **Run Tests**
 
 ```bash
 npm test                    # Unit tests
