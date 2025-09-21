@@ -81,7 +81,31 @@ RUM-APM integration concepts.
 - Datadog API Key
 - Datadog RUM Application credentials
 
-### Docker Compose Deployment
+### Quick Start with Setup Script
+
+For the fastest setup experience, use our automated setup script:
+
+```bash
+git clone https://github.com/petems/datadog-rum-apm-e2e-example
+cd datadog-rum-apm-e2e-example
+./setup.sh
+```
+
+The setup script will:
+
+- ✅ Check prerequisites (Node.js, npm, Docker, Docker Compose)
+- ✅ Create environment files from templates if missing
+- ✅ Validate environment configuration
+- ✅ Build Docker images and start services
+- ✅ Seed the database with sample data
+- ✅ Provide final instructions and helpful commands
+
+**Note**: You'll still need to configure your Datadog credentials in `.env` and `client/.env` before
+running the script.
+
+### Manual Docker Compose Deployment
+
+If you prefer to set up manually or need more control:
 
 1. **Clone and Setup**
 
@@ -156,7 +180,7 @@ RUM-APM integration concepts.
 
    ```bash
    # Seed database with sample users and content
-   npm run seed
+   npm run seed:docker
    ```
 
    This creates sample users you can use to log in, or register new users via the web interface at

@@ -20,6 +20,7 @@
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
     "screenshot": "node scripts/screenshot.js",
     "seed": "node scripts/seed-data.js",
+    "seed:docker": "docker-compose exec datablog /nodejs/bin/node scripts/seed-data.js",
     "prepare": "husky install || true",
     "audit": "npm audit --prod --audit-level=high",
     "audit:all": "npm audit --audit-level=moderate",
