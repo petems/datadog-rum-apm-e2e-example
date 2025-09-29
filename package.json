@@ -56,7 +56,7 @@
     "mongoose": "^8.18.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.5.0",
+    "@commitlint/cli": "^20.0.0",
     "@commitlint/config-conventional": "^19.5.0",
     "@happy-dom/jest-environment": "^18.0.1",
     "@playwright/test": "^1.40.0",
