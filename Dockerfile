@@ -1,5 +1,5 @@
 # ---- client build ----
-FROM node:24.7.0-bookworm-slim AS client
+FROM node:24.9.0-bookworm-slim AS client
 WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm ci
@@ -7,7 +7,7 @@ COPY client ./
 RUN npm run build
 
 # ---- server build ----
-FROM node:24.7.0-bookworm-slim AS server
+FROM node:24.9.0-bookworm-slim AS server
 ENV NODE_ENV=production
 WORKDIR /app
 COPY package*.json ./
