@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "body-parser": "^2.2.0",
+    "body-parser": "^2.2.1",
     "bunyan": "^1.8.15",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
